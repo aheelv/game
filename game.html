@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#171a2c">
+  <title>游戏 · 星集游戏舱</title>
+  <link rel="stylesheet" href="assets/css/common.css">
+  <link rel="stylesheet" href="assets/css/game.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">星</span>
+      <span>星集游戏舱<small>ARCADE COLLECTION</small></span>
+    </a>
+    <nav class="nav">
+      <a href="index.html">游戏大厅</a>
+      <a href="generator.html">提示词生成器</a>
+    </nav>
+  </header>
+
+  <main class="page">
+    <div class="game-top">
+      <a class="back-link" href="index.html">← 返回大厅</a>
+      <h1 id="gameTitle">游戏</h1>
+      <span class="tag tag-brand" id="gameCategory">分类</span>
+      <span class="tagline" id="gameTagline"></span>
+    </div>
+
+    <div class="hud">
+      <div class="hud-item"><span>得分</span><b id="hudScore">0</b></div>
+      <div class="hud-item"><span>最佳</span><b id="hudBest">0</b></div>
+      <div class="hud-item"><span id="timeLabel">用时</span><b id="hudTime">00:00</b></div>
+      <div class="hud-item"><span>关卡</span><b id="hudLevel">1</b></div>
+      <div class="hud-item status"><span>状态</span><b id="hudStatus">待开始</b></div>
+    </div>
+
+    <div class="controls-bar">
+      <button class="btn btn-primary" id="btnStart" type="button">开始游戏</button>
+      <button class="btn" id="btnPause" type="button" disabled>暂停 / 继续</button>
+      <button class="btn" id="btnRestart" type="button">重新开始</button>
+      <button class="btn" id="btnRules" type="button">玩法说明</button>
+      <button class="btn" id="btnSound" type="button">音效 开</button>
+    </div>
+
+    <div class="game-shell" id="gameShell">
+      <div class="stage" id="stage"></div>
+      <div class="dpad" id="dpad" aria-label="方向控制"></div>
+      <div class="toast" id="toast"></div>
+      <div class="overlay" id="overlay" hidden>
+        <div class="panel">
+          <div class="overlay-kicker" id="overlayKicker"></div>
+          <h2 id="overlayTitle"></h2>
+          <div id="overlayBody"></div>
+          <div class="overlay-stats" id="overlayStats" hidden></div>
+          <div class="panel-actions" id="overlayActions"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="game-tips">
+      <span>提示：P / Esc 可暂停或继续</span>
+      <span>页面切到后台会自动暂停</span>
+      <span>移动端可使用触控与虚拟方向键</span>
+    </div>
+  </main>
+
+  <!-- 公共核心 -->
+  <script src="assets/js/core/utils.js"></script>
+  <script src="assets/js/core/sound.js"></script>
+  <script src="assets/js/core/registry.js"></script>
+  <script src="assets/js/data/games.js"></script>
+  <script src="assets/js/core/game-base.js"></script>
+
+  <!-- 20 款游戏运行逻辑 -->
+  <script src="assets/js/games/game-snake.js"></script>
+  <script src="assets/js/games/game-tetris.js"></script>
+  <script src="assets/js/games/game-2048.js"></script>
+  <script src="assets/js/games/game-minesweeper.js"></script>
+  <script src="assets/js/games/game-linkmatch.js"></script>
+  <script src="assets/js/games/game-memory.js"></script>
+  <script src="assets/js/games/game-match3.js"></script>
+  <script src="assets/js/games/game-sudoku.js"></script>
+  <script src="assets/js/games/game-24.js"></script>
+  <script src="assets/js/games/game-mastermind.js"></script>
+  <script src="assets/js/games/game-sokoban.js"></script>
+  <script src="assets/js/games/game-sliding.js"></script>
+  <script src="assets/js/games/game-maze.js"></script>
+  <script src="assets/js/games/game-breakout.js"></script>
+  <script src="assets/js/games/game-flappy.js"></script>
+  <script src="assets/js/games/game-shooter.js"></script>
+  <script src="assets/js/games/game-runner.js"></script>
+  <script src="assets/js/games/game-whack.js"></script>
+  <script src="assets/js/games/game-rhythm.js"></script>
+  <script src="assets/js/games/game-typing.js"></script>
+
+  <!-- 启动器 -->
+  <script src="assets/js/core/loader.js"></script>
+</body>
+</html>

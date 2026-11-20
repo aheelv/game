@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f7fb">
+  <title>提示词生成器 · 星集游戏舱</title>
+  <link rel="stylesheet" href="assets/css/common.css">
+  <link rel="stylesheet" href="assets/css/generator.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">星</span>
+      <span>星集游戏舱<small>PROMPT STUDIO</small></span>
+    </a>
+    <nav class="nav">
+      <a href="index.html">游戏大厅</a>
+      <a class="active" href="generator.html">提示词生成器</a>
+    </nav>
+  </header>
+
+  <main class="page">
+    <div class="page-head">
+      <span class="eyebrow">PARAMETERIZED PROMPT STUDIO</span>
+      <h1>游戏提示词生成器</h1>
+      <p class="lead">选择游戏、调整参数，右侧会实时生成结构化高质量提示词。模板可展开直接编辑，所有修改仅保存在当前页面，随时可还原。</p>
+    </div>
+
+    <div class="gen-layout">
+      <section class="panel-card">
+        <h2><span class="step-badge">1</span>选择游戏</h2>
+        <div class="form-grid">
+          <div class="field">
+            <label for="gameSelect">游戏名称（切换后自动载入默认参数）</label>
+            <select id="gameSelect"></select>
+          </div>
+        </div>
+
+        <h2 style="margin-top:24px"><span class="step-badge">2</span>调整参数</h2>
+        <div class="form-grid">
+          <div class="field">
+            <label for="gameName">游戏名称 gameName</label>
+            <input id="gameName" type="text" maxlength="30">
+          </div>
+          <div class="field">
+            <label for="gameMode">玩法模式 gameMode</label>
+            <input id="gameMode" type="text" maxlength="30">
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="difficulty">难度 difficulty</label>
+              <select id="difficulty">
+                <option value="轻松">轻松 easy</option>
+                <option value="标准">标准 normal</option>
+                <option value="高手">高手 hard</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="themeStyle">主题风格 themeStyle</label>
+              <input id="themeStyle" type="text" maxlength="20">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="levelCount">关卡数量 levelCount</label>
+              <input id="levelCount" type="number" min="1" max="99">
+            </div>
+            <div class="field">
+              <label for="timeLimit">时间限制 timeLimit（秒，0 为不限）</label>
+              <input id="timeLimit" type="number" min="0" max="9999">
+            </div>
+          </div>
+          <div class="field">
+            <label for="speed">速度 speed</label>
+            <div class="range-line">
+              <input id="speed" type="range" min="1" max="10">
+              <output id="speedOutput">5</output>
+            </div>
+          </div>
+          <div class="field">
+            <label for="scoringRules">计分规则 scoringRules</label>
+            <textarea id="scoringRules"></textarea>
+          </div>
+          <div class="field">
+            <div class="switch-line">
+              <label for="sound" style="margin:0">音效 sound</label>
+              <input id="sound" type="checkbox">
+            </div>
+          </div>
+          <div class="field">
+            <div class="switch-line">
+              <label for="mobileAdaptation" style="margin:0">移动端适配 mobileAdaptation</label>
+              <input id="mobileAdaptation" type="checkbox">
+            </div>
+          </div>
+          <div class="field">
+            <label for="extraNotes">附加要求 extraNotes</label>
+            <textarea id="extraNotes" placeholder="例如：增加撤销功能；使用 Canvas；加入排行榜…"></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-ghost" id="resetParams" type="button">恢复默认参数</button>
+          <button class="btn btn-ghost" id="goPlay" type="button">试玩这个游戏</button>
+        </div>
+      </section>
+
+      <section class="panel-card output-card">
+        <div class="output-head">
+          <h2><span class="step-badge">3</span>生成结果</h2>
+          <span class="output-meta" id="outputMeta">0 字符 · 实时更新</span>
+        </div>
+        <div class="param-chips" id="paramChips"></div>
+        <textarea class="prompt-area mono" id="promptOutput" spellcheck="false" aria-label="生成的提示词"></textarea>
+        <div class="output-actions">
+          <button class="btn btn-primary" id="copyBtn" type="button">一键复制</button>
+          <button class="btn" id="exportBtn" type="button">导出为文本文件</button>
+          <button class="btn btn-ghost" id="downloadTemplateBtn" type="button">下载当前模板</button>
+        </div>
+        <span class="muted" id="actionStatus" style="display:inline-block;margin-top:10px;font-size:12px"></span>
+
+        <details class="template-toggle">
+          <summary>展开 / 编辑当前游戏的提示词模板（高级）</summary>
+          <p class="template-help">可用占位符：{{gameName}} {{gameMode}} {{difficulty}} {{themeStyle}} {{levelCount}} {{timeLimit}} {{speed}} {{scoringRules}} {{sound}} {{mobileAdaptation}} {{gameplayFocus}} {{controls}} {{extraNotes}}。修改后实时生效。</p>
+          <textarea class="mono" id="templateEditor" spellcheck="false"></textarea>
+          <div class="form-actions">
+            <button class="btn btn-sm" id="resetTemplateBtn" type="button">还原此游戏模板</button>
+          </div>
+        </details>
+      </section>
+    </div>
+
+    <div class="help-strip">
+      <div class="help-item"><b>参数命名统一</b><p>13 个参数在所有模板中同名同义，便于批量替换与脚本化处理。</p></div>
+      <div class="help-item"><b>模板逐游戏独立</b><p>每款游戏都有专属核心机制段落，切换游戏即可获得不同模板。</p></div>
+      <div class="help-item"><b>便于二次修改</b><p>可直接编辑模板文本、导出 TXT，或复制到任意 AI 工具继续使用。</p></div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <span>星集游戏舱 · 参数化提示词工作台</span>
+    <span>所有参数与模板均在本地浏览器处理，不上传任何数据</span>
+  </footer>
+
+  <script src="assets/js/core/utils.js"></script>
+  <script src="assets/js/core/registry.js"></script>
+  <script src="assets/js/data/games.js"></script>
+  <script src="assets/js/core/generator.js"></script>
+</body>
+</html>

@@ -4,7 +4,7 @@
 (function (global) {
   'use strict';
   var E = App.esc, $ = UI.$, $$ = UI.$$, ic = UI.icon, reg = App.register;
-  var COLS = ['姓名', '学号', '班级', '小游戏作品名称', '第二课堂加分', '操作留痕'];
+  var COLS = ['姓名', '学号', '班级', '辅导员姓名', '小游戏作品名称', '第二课堂加分', '操作留痕'];
 
   /* =====================================================
      4. 登记表生成打印
@@ -14,7 +14,7 @@
       return UI.pageHead({
         eyebrow: 'PRINTABLE FORM · OFFICIAL RECORD',
         title: '学生作品提交 <em>登记表</em>',
-        desc: '按实验室开放日模板栏目生成正式纸质登记表。栏目完整覆盖姓名、学号、班级、小游戏作品名称、第二课堂加分与操作留痕，便于现场填写与后续统一录入。A4 横版打印。',
+        desc: '按实验室开放日模板栏目生成正式纸质登记表。栏目完整覆盖姓名、学号、班级、辅导员姓名、小游戏作品名称、第二课堂加分与操作留痕，便于现场填写与后续统一录入。A4 横版打印。',
         actions: '<button class="btn primary" id="rgPrint">' + ic('print') + '打印表格</button>' +
                  '<button class="btn" id="rgExport">' + ic('download') + '导出CSV模板</button>'
       }) +
@@ -38,7 +38,7 @@
           COLS.map(function (c) { return '<th>' + E(c) + '</th>'; }).join('') + '<th style="width:80px">学生签字</th></tr></thead><tbody>';
         for (var i = 1; i <= n; i++) {
           html += '<tr><td class="mono" style="text-align:center">' + i + '</td>' +
-            '<td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
+            '<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
         }
         html += '</tbody></table>';
         html += '<div class="screen-only hint" style="margin-top:10px">备注：' + note + '　|　填写要求：一人一行，任务项写明具体内容，操作留痕记录系统录入情况。</div>';
@@ -48,7 +48,7 @@
       build();
       $('#rgPrint').addEventListener('click', function () { UI.toast('正在打开打印窗口，请选择 A4 横向', 'info'); setTimeout(function () { global.print(); }, 250); });
       $('#rgExport').addEventListener('click', function () {
-        var rows = []; for (var i = 1; i <= 200; i++) rows.push([i, '', '', '', '', '', '']);
+        var rows = []; for (var i = 1; i <= 200; i++) rows.push([i, '', '', '', '', '', '', '', '']);
         UI.download('学生任务完成登记表模板.csv', UI.toCSV(['序号'].concat(COLS).concat(['学生签字']), rows), 'text/csv;charset=utf-8');
       });
     }
@@ -62,7 +62,7 @@
       return UI.pageHead({
         eyebrow: 'OCR ASSIST · DATA CAPTURE',
         title: '纸质登记表 <em>识别录入</em>',
-        desc: '上传纸质表照片作为留档，并将识别/整理后的学生信息批量录入。可粘贴从 AI 识别工具得到的文本，自动按行解析姓名、学号、班级、任务项。',
+        desc: '上传纸质表照片作为留档，并将识别/整理后的学生信息批量录入。可粘贴从 AI 识别工具得到的文本，自动按行解析姓名、学号、班级、辅导员姓名、任务项。',
         actions: '<button class="btn" id="ocClear">' + ic('trash') + '清空输入</button>'
       }) +
       '<div class="grid g2">' +
@@ -73,8 +73,8 @@
           '<div class="notice warn mt16">' + ic('alert') + '<div>照片仅在本机预览，不上传服务器。识别建议：使用 AI 图片识别工具提取表格文字，再粘贴到右侧文本框批量导入。</div></div>' +
         '</section>' +
         '<section class="card card-pad"><div class="mini-head">02 · 粘贴识别文本并解析</div>' +
-          '<div class="hint" style="margin-bottom:8px">每行一名学生，字段用逗号 / 制表符 / 空格分隔：<br>姓名,学号,班级,任务项,是否完成(1/0)</div>' +
-          '<textarea class="input" id="ocText" style="min-height:180px" placeholder="张三,20260001,工商管理2201班,AI生成的小游戏作品,1"></textarea>' +
+          '<div class="hint" style="margin-bottom:8px">每行一名学生，字段用逗号 / 制表符 / 空格分隔：<br>姓名,学号,班级,辅导员姓名,任务项,是否完成(1/0)<br>兼容旧格式：姓名,学号,班级,任务项,是否完成(1/0)</div>' +
+          '<textarea class="input" id="ocText" style="min-height:180px" placeholder="张三,20260001,工商管理2201班,李老师,AI生成的小游戏作品,1"></textarea>' +
           '<div class="field-row mt16"><div class="field"><label>默认任务项（可选）</label><input class="input" id="ocTask" placeholder="未填写时使用"></div>' +
           '<div class="field"><label>完成状态</label><select class="input" id="ocDone"><option value="1">按文本中的标记</option><option value="0">全部未完成</option></select></div></div>' +
           '<button class="btn primary block" id="ocParse">' + ic('spark') + '解析并预览</button>' +
@@ -103,13 +103,17 @@
         text.split(/\r?\n/).forEach(function (line) {
           line = line.trim(); if (!line) return;
           var p = line.split(/[,，\t]+|\s{2,}/).map(function (x) { return x.trim(); }).filter(Boolean);
-          if (p.length < 2) return;
-          var done = mode === '0' ? false : (/^(1|是|已完成|完成|Y|y|true)$/i.test(p[4] || ''));
-          parsed.push({ name: p[0], sid: p[1], className: p[2] || '未填班级', task: p[3] || defTask, completed: done });
+          if (p.length < 4) return;
+          var isNew = p.length >= 6;
+          var counselor = isNew ? (p[3] || '') : '';
+          var task = (isNew ? p[4] : p[3]) || defTask;
+          var flag = isNew ? p[5] : p[4];
+          var done = mode === '0' ? false : (/^(1|是|已完成|完成|Y|y|true)$/i.test(flag || ''));
+          parsed.push({ name: p[0], sid: p[1], className: p[2] || '未填班级', counselor: counselor, task: task, completed: done });
         });
         if (!parsed.length) { UI.toast('未解析出有效记录，请检查分隔格式', 'err'); return; }
-        $('#ocPreview').innerHTML = '<div class="table-wrap"><table><thead><tr><th>姓名</th><th>学号</th><th>班级</th><th>任务项</th><th>完成</th></tr></thead><tbody>' +
-          parsed.map(function (p) { return '<tr><td>' + E(p.name) + '</td><td class="mono">' + E(p.sid) + '</td><td>' + E(p.className) + '</td><td>' + E(p.task || '—') + '</td><td>' + (p.completed ? '<span class="tag ok">是</span>' : '<span class="tag warn">否</span>') + '</td></tr>'; }).join('') +
+        $('#ocPreview').innerHTML = '<div class="table-wrap"><table><thead><tr><th>姓名</th><th>学号</th><th>班级</th><th>辅导员姓名</th><th>任务项</th><th>完成</th></tr></thead><tbody>' +
+          parsed.map(function (p) { return '<tr><td>' + E(p.name) + '</td><td class="mono">' + E(p.sid) + '</td><td>' + E(p.className) + '</td><td>' + E(p.counselor || '—') + '</td><td>' + E(p.task || '—') + '</td><td>' + (p.completed ? '<span class="tag ok">是</span>' : '<span class="tag warn">否</span>') + '</td></tr>'; }).join('') +
           '</tbody></table></div><div class="hint mt8">共解析 ' + parsed.length + ' 条</div>';
         $('#ocImport').style.display = 'block';
       });
@@ -146,6 +150,7 @@
           '<div class="field-row"><div class="field"><label>姓名</label><input class="input" name="name" required></div>' +
           '<div class="field"><label>学号</label><input class="input" name="sid" required></div></div>' +
           '<div class="field"><label>班级</label><input class="input" name="className"></div>' +
+          '<div class="field"><label>辅导员姓名</label><input class="input" name="counselor"></div>' +
           '<div class="field"><label>完成任务项</label><input class="input" name="task"></div>' +
           '<div class="field-row"><div class="field"><label>加分分值</label><input class="input" name="score" type="number" step="0.5" value="2"></div>' +
           '<div class="field"><label>操作留痕</label><input class="input" name="trace" placeholder="如：现场登记 / 会后补录"></div></div>' +
@@ -156,14 +161,14 @@
           '<button class="btn block" id="scSync">' + ic('spark') + '同步已完成任务学生</button>' +
         '</section>' +
         '<section class="card card-pad"><div class="mini-head">加分记录（' + list.length + ' 条）</div>' +
-          '<div class="table-wrap"><table><thead><tr><th>姓名</th><th>学号</th><th>班级</th><th>任务项</th><th>加分</th><th>操作留痕</th><th></th></tr></thead><tbody id="scBody">' + scRows() + '</tbody></table></div>' +
+          '<div class="table-wrap"><table><thead><tr><th>姓名</th><th>学号</th><th>班级</th><th>辅导员姓名</th><th>任务项</th><th>加分</th><th>操作留痕</th><th></th></tr></thead><tbody id="scBody">' + scRows() + '</tbody></table></div>' +
         '</section>' +
       '</div>';
     },
     init: function () {
       $('#scForm').addEventListener('submit', function (e) {
         e.preventDefault(); var f = e.target.elements;
-        var rec = { name: f.name.value.trim(), sid: f.sid.value.trim(), className: f.className.value.trim(), task: f.task.value.trim(), score: +f.score.value || 0, trace: f.trace.value.trim(), time: new Date().toISOString() };
+        var rec = { name: f.name.value.trim(), sid: f.sid.value.trim(), className: f.className.value.trim(), counselor: f.counselor.value.trim(), task: f.task.value.trim(), score: +f.score.value || 0, trace: f.trace.value.trim(), time: new Date().toISOString() };
         Store.upsertScore(rec); UI.toast('已登记：' + rec.name, 'ok'); go('scores');
       });
       $('#scSync').addEventListener('click', function () {
@@ -176,10 +181,10 @@
   });
   function scRows() {
     var l = Store.state.scores;
-    if (!l.length) return '<tr><td colspan="7"><div class="empty">' + ic('plus') + '暂无加分记录</div></td></tr>';
+    if (!l.length) return '<tr><td colspan="8"><div class="empty">' + ic('plus') + '暂无加分记录</div></td></tr>';
     return l.map(function (s) {
       return '<tr><td><b style="color:var(--txt)">' + E(s.name) + '</b></td><td class="mono">' + E(s.sid) + '</td><td>' + E(s.className || '—') + '</td>' +
-        '<td>' + E(s.task || '—') + '</td><td><span class="tag ok">' + E(s.score) + ' 分</span></td><td>' + E(s.trace || '—') + '</td>' +
+        '<td>' + E(s.counselor || '—') + '</td><td>' + E(s.task || '—') + '</td><td><span class="tag ok">' + E(s.score) + ' 分</span></td><td>' + E(s.trace || '—') + '</td>' +
         '<td><button class="btn sm danger" data-sc-del="' + E(s.sid) + '">' + ic('trash') + '</button></td></tr>';
     }).join('');
   }
@@ -222,7 +227,7 @@
       '</div>' +
       '<section class="card card-pad mt16"><div class="mini-head">缺失照片名单（' + missing.length + ' 人）</div>' +
         (missing.length ? '<div style="display:flex;flex-wrap:wrap;gap:8px">' + missing.map(function (s) {
-          return '<span class="tag warn">' + E(s.name) + ' · ' + E(s.sid) + '</span>';
+          return '<span class="tag warn">' + E(s.name) + ' · ' + E(s.sid) + (s.counselor ? ' · ' + E(s.counselor) : '') + '</span>';
         }).join('') + '</div>' : '<div class="empty">' + ic('check') + '所有签到学生均已提交照片</div>') + '</section>';
     },
     init: function () {
@@ -407,7 +412,7 @@
           }).join('') : '<div class="empty">等待到场数据</div>') + '</div>' +
           '<div class="divider"></div><div class="mini-head">最近提交动态</div><div class="live-list">' +
             (s.students.length ? s.students.slice(0, 6).map(function (x) {
-              return '<div class="live-item"><div class="avatar">' + E(x.name.slice(0, 1)) + '</div><div class="who"><b>' + E(x.name) + '</b><span>' + E(x.className) + ' · ' + E(x.task || '项目中') + '</span></div><time>' + UI.nowStr(x.time) + '</time></div>';
+              return '<div class="live-item"><div class="avatar">' + E(x.name.slice(0, 1)) + '</div><div class="who"><b>' + E(x.name) + '</b><span>' + E(x.className) + ' · ' + E(x.counselor || '未填辅导员') + ' · ' + E(x.task || '项目中') + '</span></div><time>' + UI.nowStr(x.time) + '</time></div>';
             }).join('') : '<div class="empty">暂无动态</div>') + '</div>' +
         '</section>' +
         '<section class="card chart-box"><div class="chart-title">学生成果与佐证照片 <small id="ldSlideInfo">0 / ' + arc.length + '</small></div>' +

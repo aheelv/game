@@ -27,7 +27,7 @@
     rules: { hoursPerWork: 1, scorePerWork: 2, heatmapStep: 2 },
     refresh: { intervalMs: 15000, timeoutMs: 5000, retry: 3, debounceMs: 300 },
     carousel: { intervalMs: 4200 },
-    theme: { colors: ['#2de2e6', '#9b6dff', '#f472b6', '#3ee0a0', '#ffb454', '#4d7cfe'] },
+    theme: { colors: ['#00e6d2', '#7c4dff', '#ff5c9d', '#2ee6a8', '#ff8a3d', '#3d7dff'] },
     source: { mode: 'local', endpoint: '' },
     highlights: [
       { icon: 'spark', tag: 'ACTIVITY THEME', title: 'AI游戏奇遇记 · 零代码创作实战',

@@ -309,6 +309,27 @@ tbody tr:last-child td{border-bottom:none}
 .toast.info{border-left:3px solid var(--cyan)}
 @keyframes toastIn{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
 
+/* ---------- 签到记录管理：二次确认弹窗 ---------- */
+.record-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.record-hint{font-size:11px;color:var(--txt-3)}
+.btn.danger-solid{background:linear-gradient(135deg,#ff5470,#ff8a3d);border-color:transparent;color:#fff;box-shadow:0 8px 24px rgba(255,84,112,.28)}
+.btn.danger-solid:hover{filter:brightness(1.12);box-shadow:0 10px 30px rgba(255,84,112,.45)}
+.btn:disabled{opacity:.38;cursor:not-allowed;transform:none!important;box-shadow:none!important;filter:none}
+.confirm-mask{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(1,4,12,.72);backdrop-filter:blur(5px);opacity:0;transition:opacity .18s ease}
+.confirm-mask.show{opacity:1}
+.confirm-box{width:min(420px,100%);background:linear-gradient(160deg,rgba(14,22,44,.98),rgba(7,11,26,.98));border:1px solid var(--line-strong);border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.55);padding:24px 24px 20px;transform:translateY(14px) scale(.97);transition:transform .2s cubic-bezier(.2,.8,.2,1)}
+.confirm-mask.show .confirm-box{transform:none}
+.confirm-ico{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;background:rgba(61,125,255,.12);border:1px solid rgba(61,125,255,.35);color:var(--cyan)}
+.confirm-ico.danger{background:rgba(255,84,112,.12);border-color:rgba(255,84,112,.4);color:var(--red)}
+.confirm-ico svg{width:23px;height:23px}
+.confirm-title{margin:0 0 10px;font-size:17px;color:var(--txt);font-weight:700}
+.confirm-msg{font-size:13px;line-height:1.7;color:var(--txt-2)}
+.confirm-msg b{color:var(--txt)}
+.confirm-msg .mono{color:var(--cyan)}
+.confirm-tip{margin-top:12px;padding:10px 12px;border-radius:9px;background:rgba(255,84,112,.07);border:1px solid rgba(255,84,112,.22);font-size:11.5px;line-height:1.6;color:var(--red)}
+.confirm-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.confirm-actions .btn{min-width:96px;justify-content:center}
+
 /* ---------- 其它 ---------- */
 .overlay{display:none;position:fixed;inset:0;background:rgba(1,4,12,.78);z-index:35;backdrop-filter:blur(3px)}
 .overlay.show{display:block}

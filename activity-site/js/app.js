@@ -88,7 +88,8 @@
   PAGES.home = {
     title: '活动总览',
     render: function () {
-      var st = Store.stats(), s = Store.state;
+      var d = currentStats(), s = Store.state;
+      var st = { total: d.total, done: d.done, rate: d.rate, classes: d.classes };
       var doneTasks = s.tasks.filter(function (t) { return t.status === 'done'; }).length;
       var launches = [
         { id: 'checkin', icon: 'check', t: '学生到场登记', d: '采集姓名、学号、班级、到场时间与作品提交情况，作为大屏数据源。' },
@@ -159,35 +160,12 @@
       '<div class="chart-title"><span>' + E(title) + '</span><small>' + E(en) + '</small></div>' + body + '</section>';
   }
 
-  /* 演示数据：确定性生成，仅用于无现场数据时的大屏预览 */
-  function demoRecords() {
-    var classes = ['大数据2301', '大数据2302', '人工智能2301', '人工智能2302', '金融科技2301', '数据科学2301'];
-    var works = ['AI贪吃蛇', 'AI Flappy Bird', 'AI 2048', 'AI 打砖块', 'AI 记忆翻牌', 'AI 迷宫探险', 'AI 飞机大战', 'AI 拼图'];
-    var sn = ['王', '李', '张', '刘', '陈', '杨', '黄', '赵', '周', '吴', '徐', '孙', '马', '朱', '胡', '林'];
-    var gn = ['子涵', '雨桐', '浩然', '思远', '梓萱', '一鸣', '嘉怡', '宇轩', '欣妍', '泽宇', '可欣', '明哲', '佳宁', '文博'];
-    var seed = 20261125;
-    function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
-    var arr = [];
-    for (var i = 0; i < 72; i++) {
-      var hr = 9 + Math.floor(rnd() * 7), mi = Math.floor(rnd() * 60);
-      arr.push({
-        id: 'demo' + i,
-        name: sn[Math.floor(rnd() * sn.length)] + gn[Math.floor(rnd() * gn.length)],
-        sid: '2026' + String(100000 + Math.floor(rnd() * 899999)),
-        className: classes[Math.floor(rnd() * classes.length)],
-        task: works[Math.floor(rnd() * works.length)],
-        completed: rnd() < 0.74,
-        time: new Date(2026, 10, 25, hr, mi).toISOString(),
-        recheck: rnd() < 0.15
-      });
-    }
-    return arr;
-  }
-
-  /* 由记录派生全部分析指标 */
-  function derive(list) {
-    var hours = [];
-    for (var h = 8; h <= 16; h++) hours.push(h);
+  /* 由记录派生全部分析指标；输出结构与改造前完全一致 */
+  function derive(list, cfg) {
+    cfg = cfg || {};
+    var hours = (cfg.window && cfg.window.hours && cfg.window.hours.length) ? cfg.window.hours.slice() : [8, 9, 10, 11, 12, 13, 14, 15, 16];
+    var targets = cfg.targets || {};
+    var topN = cfg.topN || {};
     var byClass = {}, byTask = {}, heat = {}, hourTotal = {}, hourDone = {};
     hours.forEach(function (h) { hourTotal[h] = 0; hourDone[h] = 0; });
     list.forEach(function (x) {
@@ -215,56 +193,76 @@
     });
     var rechecks = list.filter(function (x) { return x.recheck; }).length;
     var radar = [
-      Math.min(100, Math.round(total / 80 * 100)),
+      Math.min(100, Math.round(total / (+targets.attendance || 80) * 100)),
       rate,
-      Math.min(100, Math.round(cls.length / 6 * 100)),
-      Math.min(100, Math.round(Object.keys(byTask).length / 8 * 100)),
+      Math.min(100, Math.round(cls.length / (+targets.classes || 6) * 100)),
+      Math.min(100, Math.round(Object.keys(byTask).length / (+targets.workTypes || 8) * 100)),
       total ? Math.round((1 - rechecks / total) * 100) : 0
     ];
     var workList = Object.keys(byTask).map(function (k) { return { label: k, v: byTask[k] }; })
-      .sort(function (a, b) { return b.v - a.v; }).slice(0, 6);
+      .sort(function (a, b) { return b.v - a.v; }).slice(0, +topN.works || 6);
     return {
       total: total, done: done, rate: rate, classes: cls.length,
       works: Object.keys(byTask).length,
       hours: hours, labels: labels, arrT: arrT, arrD: arrD,
       byClass: byClass, cls: cls, heat: heat, workList: workList,
       radar: radar, rechecks: rechecks,
-      recent: list.slice().sort(function (a, b) { return new Date(b.time) - new Date(a.time); }).slice(0, 8)
+      recent: list.slice().sort(function (a, b) { return new Date(b.time) - new Date(a.time); }).slice(0, +topN.feed || 8)
     };
   }
 
-  var dashDemo = false;
-  var dashTimer = null, scrollTimer = null;
+  var dashTimer = null, scrollTimer = null, hlIndex = 0, autoScroll = false;
 
-  var HIGHLIGHTS = [
-    { icon: 'spark', tag: 'ACTIVITY THEME', title: 'AI游戏奇遇记 · 零代码创作实战',
-      desc: '借助AI工具，零代码完成小游戏作品并现场提交。让创意即刻成真，让每个想法都能跑起来。',
-      k: '实战', v: 'AI 工具 · 小游戏创作 · 现场提交' },
-    { icon: 'box', tag: 'PROFESSIONAL BACKGROUND', title: '用友新道大数据实训室',
-      desc: '面向大数据与人工智能实践教学，承接实验室开放日真实项目任务，融合校企协同育人场景。',
-      k: '场地', v: '至学楼D103 · 开放共享，实践求真' },
-    { icon: 'screen', tag: 'PROFESSIONAL FEATURES', title: '零代码 · 可视化 · 全过程留痕',
-      desc: '操作可视化、成果可展示、过程可追溯。纸质登记与现场大屏双轨一致，数据本地保存、离线可用。',
-      k: '特色', v: '零代码创作 · 双轨一致 · 离线可用' },
-    { icon: 'crown', tag: 'ACHIEVEMENT HIGHLIGHTS', title: '作品提交 · 第二课堂认定',
-      desc: '完成任意项目任务可加第二课堂 1 学时，优秀作品现场轮播展示，形成可复制的开放共享实践模式。',
-      k: '成果', v: '第二课堂 1 学时 · 成果归档展示' }
-  ];
+  /* 统一快照消费：首页 / 大屏 / 巡视页共用同一套派生结果 */
+  function currentStats() {
+    var snap = DataSource.getSnapshot();
+    return derive(snap.records, snap.config);
+  }
+
+  /* 数据源变化时重绘大屏：保留滚动位置与轮播页码，避免大屏跳动 */
+  function onDataSourceChanged() {
+    if (current !== 'dashboard') return;
+    var app = $('#app');
+    if (!app) return;
+    var top = app.scrollTop;
+    go('dashboard');
+    var next = $('#app');
+    if (next) next.scrollTop = top;
+  }
+
+  var lastLiveMode = 'local';
 
   PAGES.dashboard = {
     title: 'AI创作数据大屏',
     render: function () {
-      var real = Store.state.students || [];
-      var usingDemo = dashDemo || real.length === 0;
-      var d = derive(usingDemo ? demoRecords() : real);
+      var snap = DataSource.getSnapshot();
+      var cfg = snap.config || {};
+      var d = derive(snap.records, cfg);
       var V = global.Viz;
-      var hl = HIGHLIGHTS.map(function (x, i) {
-        return '<div class="hl-slide' + (i === 0 ? ' on' : '') + '" data-hl="' + i + '">' +
-          '<div class="hl-ico">' + ic(x.icon) + '</div><div class="hl-tag">' + x.tag + '</div>' +
+      var colors = (cfg.theme && cfg.theme.colors) || ['#22d3ee', '#8b5cf6', '#ec4899', '#34d399', '#fbbf24', '#3b82f6'];
+      var usingDemo = snap.meta.source === 'demo';
+      var stale = !!snap.meta.stale;
+      var ev = cfg.event || {};
+      var rules = cfg.rules || {};
+      var hoursPerWork = +rules.hoursPerWork || 1;
+      var heatStep = +rules.heatmapStep || 2;
+      var highlights = cfg.highlights || [];
+      var guidelines = cfg.guidelines || [];
+      if (hlIndex >= highlights.length) hlIndex = 0;
+      var badge = usingDemo ? '<span class="db-demo">DEMO · 演示数据</span>' :
+        stale ? '<span class="db-stale">DELAY · 数据延迟</span>' :
+        '<span class="db-real">LIVE · 现场数据</span>';
+      var hl = highlights.map(function (x, i) {
+        return '<div class="hl-slide' + (i === hlIndex ? ' on' : '') + '" data-hl="' + i + '">' +
+          '<div class="hl-ico">' + ic(x.icon) + '</div><div class="hl-tag">' + E(x.tag) + '</div>' +
           '<h3>' + E(x.title) + '</h3><p>' + E(x.desc) + '</p>' +
           '<div class="hl-kv"><span>' + E(x.k) + '</span><b>' + E(x.v) + '</b></div></div>';
       }).join('');
-      var dots = HIGHLIGHTS.map(function (_, i) { return '<button class="hl-dot' + (i === 0 ? ' on' : '') + '" data-dot="' + i + '" aria-label="第' + (i + 1) + '张"></button>'; }).join('');
+      var dots = highlights.map(function (_, i) { return '<button class="hl-dot' + (i === hlIndex ? ' on' : '') + '" data-dot="' + i + '" aria-label="第' + (i + 1) + '张"></button>'; }).join('');
+      var guideHtml = guidelines.map(function (g, i) {
+        return '<div class="notice ' + (i ? 'mt12 ' : '') + (g.tone || '') + '">' + ic(g.icon) +
+          '<div><b>' + E(g.title) + '</b><br>' + E(g.text) + '</div></div>';
+      }).join('');
       return UI.pageHead({
         eyebrow: 'AI GAME CREATION · LIVE DASHBOARD',
         title: 'AI游戏奇遇记 · 零代码创作 <em>实时大屏</em>',
@@ -276,10 +274,10 @@
       }) +
       '<div class="dash-banner fade-in">' +
         '<div class="db-main"><span class="db-live"><span class="pulse-dot"></span> LIVE · 实验室开放日</span>' +
-          '<h2>用友新道大数据实训室 · AI游戏奇遇记：零代码创作实战</h2>' +
-          '<p>地点 至学楼D103 · 开放共享，实践求真 · 借助AI工具零代码完成小游戏作品并现场提交</p></div>' +
-        '<div class="db-side"><div class="db-clock" id="dashClock">--:--:--</div><div class="db-date">' + UI.dateStr() + '</div>' +
-          (usingDemo ? '<span class="db-demo">DEMO · 演示数据</span>' : '<span class="db-real">LIVE · 现场数据</span>') + '</div>' +
+          '<h2>' + E(ev.labName || '用友新道大数据实训室') + ' · ' + E(ev.theme || 'AI游戏奇遇记：零代码创作实战') + '</h2>' +
+          '<p>地点 ' + E(ev.location || '至学楼D103') + ' · ' + E(ev.openDayTheme || '开放共享，实践求真') + ' · ' + E(ev.taskBrief || '') + '</p></div>' +
+        '<div class="db-side"><div class="db-clock" id="dashClock">--:--:--</div><div class="db-date">' + UI.dateStr() +
+          '<span class="db-updated" id="dbUpdated">更新于 ' + UI.nowStr(snap.meta.generatedAt) + '</span></div>' + badge + '</div>' +
       '</div>' +
       '<div class="dash-kpis">' +
         kpi('check', '到场学生', d.total, '人', '累计到场记录', 'a', d.arrT) +
@@ -287,14 +285,14 @@
         kpi('screen', '提交率', d.rate, '%', '提交 / 到场', 'b', d.arrD) +
         kpi('board', '参与班级', d.classes, '个', '到场覆盖班级', 'd', d.arrT) +
         kpi('box', '作品类型', d.works, '类', '小游戏作品种类', 'a', d.arrD) +
-        kpi('info', '第二课堂', d.done, '学时', '按 1 学时 / 人计', 'c', d.arrD) +
+        kpi('info', '第二课堂', d.done * hoursPerWork, '学时', '按 ' + hoursPerWork + ' 学时 / 人计', 'c', d.arrD) +
       '</div>' +
       '<div class="dash-grid">' +
         panel('到场与提交累计趋势', 'TREND ANALYSIS', V.lineChart(d.labels, [
-          { name: '累计到场', color: '#22d3ee', data: d.arrT },
-          { name: '累计提交', color: '#8b5cf6', data: d.arrD }
+          { name: '累计到场', color: colors[0], data: d.arrT },
+          { name: '累计提交', color: colors[1], data: d.arrD }
         ]), 'span2') +
-        panel('作品提交构成', 'COMPLETION', V.donut(d.rate, { label: '作品提交率' }) +
+        panel('作品提交构成', 'COMPLETION', V.donut(d.rate, { label: '作品提交率', color: colors[0] }) +
           '<div class="vz-donut-legend"><div><i style="background:#34d399"></i>已提交 <b>' + d.done + '</b> 人</div>' +
           '<div><i style="background:#fbbf24"></i>待提交 <b>' + (d.total - d.done) + '</b> 人</div>' +
           '<div><i style="background:#8b5cf6"></i>复核记录 <b>' + d.rechecks + '</b> 条</div></div>', '') +
@@ -302,19 +300,20 @@
         panel('参与维度画像', 'MULTI-DIMENSIONAL', V.radar(['到场规模', '提交完成', '班级覆盖', '作品多样', '过程规范'], d.radar), '') +
         panel('班级 × 时段参与热度', 'HEATMAP', V.heatmap(d.cls.length ? d.cls : ['暂无班级'], d.labels, d.cls.length ? d.cls.map(function (c) {
           return d.hours.map(function (h) { return d.heat[c][h] || 0; });
-        }) : [d.hours.map(function () { return 0; })]), 'span2') +
+        }) : [d.hours.map(function () { return 0; })], heatStep), 'span2') +
         panel('到场时段分布', 'HISTOGRAM', V.histogram(d.hours.map(function (h) {
           return { label: (h < 10 ? '0' : '') + h + ':00', v: Object.keys(d.heat).reduce(function (s, c) { return s + (d.heat[c][h] || 0); }, 0) };
         })), '') +
-        panel('小游戏作品类型占比', 'WORK MIX', V.shares(d.workList, d.done), 'span2') +
+        panel('小游戏作品类型占比', 'WORK MIX', V.shares(d.workList, d.done, colors), 'span2') +
         '<section class="card chart-box dash-panel span2"><div class="chart-title"><span>活动信息与任务口径</span><small>EVENT BRIEF</small></div>' +
           '<div class="event-grid">' +
-            '<div class="event-item"><span>实验室名称</span><b>用友新道大数据实训室</b></div>' +
-            '<div class="event-item"><span>活动地点</span><b>至学楼D103</b></div>' +
-            '<div class="event-item"><span>活动主题</span><b>AI游戏奇遇记：零代码创作实战</b></div>' +
-            '<div class="event-item"><span>开放日主题</span><b>开放共享，实践求真</b></div>' +
+            '<div class="event-item"><span>实验室名称</span><b>' + E(ev.labName || '用友新道大数据实训室') + '</b></div>' +
+            '<div class="event-item"><span>活动地点</span><b>' + E(ev.location || '至学楼D103') + '</b></div>' +
+            '<div class="event-item"><span>活动主题</span><b>' + E(ev.theme || 'AI游戏奇遇记：零代码创作实战') + '</b></div>' +
+            '<div class="event-item"><span>开放日主题</span><b>' + E(ev.openDayTheme || '开放共享，实践求真') + '</b></div>' +
           '</div>' +
-          '<div class="task-brief">' + ic('spark') + '<div><b>任务说明</b><br>根据操作步骤，借助AI工具零代码完成小游戏作品并现场提交即完成任务。完成任意项目任务可加第二课堂 1 学时。</div></div>' +
+          '<div class="task-brief">' + ic('spark') + '<div><b>任务说明</b><br>' + E(ev.taskBrief || '') +
+            (ev.creditNote ? ' ' + E(ev.creditNote) : '') + '</div></div>' +
         '</section>' +
       '</div>' +
       '<div class="hl-carousel"><div class="hl-head"><div class="mini-head">成果亮点 · HIGHLIGHTS</div>' +
@@ -327,49 +326,60 @@
               '<div class="who"><b>' + E(x.name) + '</b><span>' + E(x.className) + ' · ' + E(x.task || 'AI小游戏作品') + '</span></div>' +
               '<time>' + UI.nowStr(x.time) + '</time></div>';
           }).join('') : '<div class="empty">等待学生提交作品</div>') + '</div></section>' +
-        '<section class="card chart-box"><div class="chart-title">现场执行口径 <small>GUIDELINES</small></div>' +
-          '<div class="notice">' + ic('info') + '<div><b>任务说明</b><br>根据操作步骤，借助AI工具零代码完成小游戏作品并现场提交即完成任务。</div></div>' +
-          '<div class="notice mt12">' + ic('check') + '<div><b>双轨一致</b><br>纸质登记表为正式上报材料，大屏数据仅用于现场展示，二者保持一致。</div></div>' +
-          '<div class="notice warn mt12">' + ic('alert') + '<div><b>兜底方案</b><br>工具故障立即停用，完全依靠纸质登记表完成到场与作品登记。</div></div>' +
-        '</section>' +
+        '<section class="card chart-box"><div class="chart-title">现场执行口径 <small>GUIDELINES</small></div>' + guideHtml + '</section>' +
       '</div>';
     },
     init: function (root) {
       clearInterval(dashTimer); clearInterval(scrollTimer);
       dashTimer = scrollTimer = null;
+      var cfg = DataSource.getConfig();
       $('#dashExport').addEventListener('click', UI.exportStudents);
       $('#dashFull').addEventListener('click', function () {
         var el = document.documentElement;
         if (el.requestFullscreen) el.requestFullscreen(); else UI.toast('当前浏览器不支持全屏', 'warn');
       });
-      $('#dashDemo').addEventListener('click', function () { dashDemo = !dashDemo; go('dashboard'); });
-      var sc = $('#dashScroll');
-      sc.addEventListener('click', function () {
-        if (scrollTimer) { clearInterval(scrollTimer); scrollTimer = null; sc.classList.remove('on'); UI.toast('已停止自动巡屏', 'info'); }
-        else {
-          sc.classList.add('on'); UI.toast('自动巡屏已开启', 'ok');
-          var app = $('#app');
-          scrollTimer = setInterval(function () {
-            if (!app) return;
-            if (app.scrollTop + app.clientHeight >= app.scrollHeight - 4) app.scrollTop = 0;
-            else app.scrollTop += 2;
-          }, 40);
-        }
+      $('#dashDemo').addEventListener('click', function () {
+        if (DataSource.getSnapshot().meta.source === 'demo') DataSource.setMode(lastLiveMode);
+        else { lastLiveMode = cfg.source.mode; DataSource.setMode('demo'); }
       });
-      var clock = $('#dashClock');
-      function tick() { if (clock) clock.textContent = new Date().toLocaleTimeString('zh-CN', { hour12: false }); }
+      var sc = $('#dashScroll');
+      function startScroll() {
+        if (scrollTimer) return;
+        sc.classList.add('on');
+        var app = $('#app');
+        scrollTimer = setInterval(function () {
+          if (!app) return;
+          if (app.scrollTop + app.clientHeight >= app.scrollHeight - 4) app.scrollTop = 0;
+          else app.scrollTop += 2;
+        }, 40);
+      }
+      function stopScroll() {
+        clearInterval(scrollTimer); scrollTimer = null; sc.classList.remove('on');
+      }
+      sc.addEventListener('click', function () {
+        if (scrollTimer) { stopScroll(); autoScroll = false; UI.toast('已停止自动巡屏', 'info'); }
+        else { startScroll(); autoScroll = true; UI.toast('自动巡屏已开启', 'ok'); }
+      });
+      if (autoScroll) startScroll();
+      var clock = $('#dashClock'), updated = $('#dbUpdated');
+      function tick() {
+        if (clock) clock.textContent = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+        if (updated) updated.textContent = '更新于 ' + UI.nowStr(DataSource.getSnapshot().meta.generatedAt);
+      }
       tick(); var ct = setInterval(tick, 1000);
       /* 成果亮点轮播 */
-      var slides = $$('.hl-slide'), dots = $$('.hl-dot'), idx = 0;
+      var slides = $$('.hl-slide'), dots = $$('.hl-dot');
+      var interval = Math.max(1200, +cfg.carousel.intervalMs || 4200);
       function show(i) {
-        idx = (i + slides.length) % slides.length;
-        slides.forEach(function (s, j) { s.classList.toggle('on', j === idx); });
-        dots.forEach(function (d, j) { d.classList.toggle('on', j === idx); });
+        if (!slides.length) return;
+        hlIndex = (i + slides.length) % slides.length;
+        slides.forEach(function (s, j) { s.classList.toggle('on', j === hlIndex); });
+        dots.forEach(function (d, j) { d.classList.toggle('on', j === hlIndex); });
       }
-      function play() { dashTimer = setInterval(function () { show(idx + 1); }, 4200); }
+      function play() { clearInterval(dashTimer); dashTimer = setInterval(function () { show(hlIndex + 1); }, interval); }
       function stop() { clearInterval(dashTimer); dashTimer = null; }
-      $('#hlPrev').addEventListener('click', function () { stop(); show(idx - 1); play(); });
-      $('#hlNext').addEventListener('click', function () { stop(); show(idx + 1); play(); });
+      $('#hlPrev').addEventListener('click', function () { stop(); show(hlIndex - 1); play(); });
+      $('#hlNext').addEventListener('click', function () { stop(); show(hlIndex + 1); play(); });
       dots.forEach(function (d) { d.addEventListener('click', function () { stop(); show(+d.getAttribute('data-dot')); play(); }); });
       var stage = $('.hl-stage');
       if (stage) { stage.addEventListener('mouseenter', stop); stage.addEventListener('mouseleave', play); }
@@ -491,6 +501,16 @@
   /* ---------------- 启动 ---------------- */
   function boot() {
     bindGlobal();
+    function updateSysStatus(s) {
+      var el = $('#sysStatusText');
+      if (!el || (Store.state.settings && Store.state.settings.paperMode)) return;
+      el.textContent = s.meta.stale ? ('数据延迟 · ' + (s.meta.staleReason || '等待恢复')) :
+        s.meta.source === 'demo' ? '演示数据模式 · 非现场数据' :
+        '现场数据同步中 · ' + Math.round(((s.config && s.config.refresh && s.config.refresh.intervalMs) || 15000) / 1000) + ' 秒刷新';
+    }
+    DataSource.subscribe(onDataSourceChanged);
+    DataSource.subscribe(updateSysStatus);
+    updateSysStatus(DataSource.getSnapshot());
     renderNav();
     var initial = location.hash.replace('#', '') || Store.state.settings.lastPage || 'home';
     go(PAGES[initial] ? initial : 'home');
@@ -506,6 +526,8 @@
   global.App = {
     register: function (id, title, page) { PAGES[id] = Object.assign({ title: title }, page); },
     refreshNav: renderNav,
-    go: go, esc: E, icon: ic
+    go: go, esc: E, icon: ic,
+    derive: derive,
+    currentStats: currentStats
   };
 })(window);

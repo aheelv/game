@@ -381,7 +381,8 @@
      ===================================================== */
   reg('leader', '领导巡视展示', {
     render: function () {
-      var st = Store.stats(), s = Store.state;
+      var d = App.currentStats(), s = Store.state;
+      var st = { total: d.total, done: d.done, rate: d.rate, byClass: d.byClass };
       var arc = s.archives;
       return UI.pageHead({
         eyebrow: 'LEADERSHIP TOUR · SHOWCASE MODE',

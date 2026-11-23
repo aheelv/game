@@ -41,10 +41,12 @@
     return [header.map(cell).join(',')].concat(rows.map(function (r) { return r.map(cell).join(','); })).join('\r\n');
   }
   function exportStudents() {
-    var rows = Store.state.students.map(function (s) {
-      return [s.name, s.sid, s.className, s.task, s.completed ? '已完成' : '未完成', dateStr(s.time), s.recheck ? '是' : '否'];
+    var snapshot = global.DataSource && DataSource.getSnapshot();
+    var list = snapshot ? snapshot.records : Store.state.students;
+    var rows = list.map(function (s) {
+      return [s.name, s.sid, s.className, s.task, s.completed ? '已完成' : '未完成', dateStr(s.time), s.recheck ? '是' : '否', s.source || 'local'];
     });
-    download('AI游戏创作到场与作品提交记录_' + Date.now() + '.csv', toCSV(['姓名', '学号', '班级', '小游戏作品名称', '是否提交', '到场时间', '复核'], rows), 'text/csv;charset=utf-8');
+    download('AI游戏创作到场与作品提交记录_' + Date.now() + '.csv', toCSV(['姓名', '学号', '班级', '小游戏作品名称', '是否提交', '到场时间', '复核', '数据来源'], rows), 'text/csv;charset=utf-8');
   }
   function exportScores() {
     var rows = Store.state.scores.map(function (s) { return [s.name, s.sid, s.className, s.task, s.score, s.trace || '', s.time || '']; });

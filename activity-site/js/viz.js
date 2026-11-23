@@ -64,7 +64,8 @@
   }
 
   /* ---------- 热力图 ---------- */
-  function heatmap(rows, cols, matrix) {
+  function heatmap(rows, cols, matrix, step) {
+    step = Math.max(1, +step || 2);
     var html = '<div class="vz-heat"><div class="vz-heat-row vz-heat-head"><span>班级 / 时段</span>';
     cols.forEach(function (c) { html += '<span>' + esc(c) + '</span>'; });
     html += '</div>';
@@ -72,7 +73,7 @@
       html += '<div class="vz-heat-row"><span class="vz-heat-label">' + esc(r) + '</span>';
       cols.forEach(function (c, ci) {
         var v = (matrix[ri] && matrix[ri][ci]) || 0;
-        var lv = Math.min(5, Math.ceil(v / 2));
+        var lv = Math.min(5, Math.ceil(v / step));
         html += '<span class="vz-heat-cell h' + lv + '" title="' + esc(r + ' · ' + c + '：' + v + ' 人次') + '">' + (v || '') + '</span>';
       });
       html += '</div>';
@@ -149,9 +150,9 @@
   }
 
   /* ---------- 占比横条 ---------- */
-  function shares(items, total) {
+  function shares(items, total, palette) {
     if (!items.length) return '<div class="empty">暂无作品数据</div>';
-    var colors = ['#22d3ee', '#8b5cf6', '#ec4899', '#34d399', '#fbbf24', '#3b82f6'];
+    var colors = (palette && palette.length) ? palette : ['#22d3ee', '#8b5cf6', '#ec4899', '#34d399', '#fbbf24', '#3b82f6'];
     return '<div class="vz-shares">' + items.map(function (it, i) {
       var pct = total ? Math.round(it.v / total * 100) : 0;
       return '<div class="vz-share"><span class="sn" title="' + esc(it.label) + '">' + esc(it.label) + '</span>' +

@@ -174,7 +174,10 @@
     removeTask: function (id) { return this.commit(function (s) { s.tasks = s.tasks.filter(function (x) { return x.id !== id; }); }); },
 
     // ---- 设置 ----
-    setSetting: function (k, v) { return this.commit(function (s) { s.settings[k] = v; }); },
+    setSetting: function (k, v) {
+      if (state.settings && state.settings[k] === v) return v;
+      return this.commit(function (s) { s.settings[k] = v; });
+    },
 
     // ---- 工具 ----
     nextSid: function () { return '2026' + String(Math.floor(Math.random() * 900000) + 100000); },

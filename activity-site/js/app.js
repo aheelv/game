@@ -180,7 +180,7 @@
       return UI.pageHead({
         eyebrow: 'AI GAME CREATION · LIVE DASHBOARD',
         title: 'AI游戏奇遇记 · 零代码创作 <em>实时大屏</em>',
-        desc: '用友新道大数据实训室（至学楼D103）现场数据全景。展示到场趋势、作品提交、班级分布、参与热度与成果亮点。',
+        desc: '管理学院章鱼大数据实验室（至学楼D103）现场数据全景。展示到场趋势、作品提交、班级分布、参与热度与成果亮点。',
         actions: '<button class="btn" id="dashRefresh">' + ic('spark') + '刷新数据</button>' +
                  '<button class="btn" id="dashDemo">' + ic('board') + (usingDemo ? '查看现场数据' : '演示数据预览') + '</button>' +
                  '<button class="btn" id="dashScroll">' + ic('board') + '自动巡屏</button>' +
@@ -189,7 +189,7 @@
       }) +
       '<div class="dash-banner fade-in">' +
         '<div class="db-main"><span class="db-live"><span class="pulse-dot"></span> LIVE · 实验室开放日</span>' +
-          '<h2>' + E(ev.labName || '用友新道大数据实训室') + ' · ' + E(ev.theme || 'AI游戏奇遇记：零代码创作实战') + '</h2>' +
+          '<h2>' + E(ev.labName || '管理学院章鱼大数据实验室') + ' · ' + E(ev.theme || 'AI游戏奇遇记：零代码创作实战') + '</h2>' +
           '<p>地点 ' + E(ev.location || '至学楼D103') + ' · ' + E(ev.openDayTheme || '开放共享，实践求真') + ' · ' + E(ev.taskBrief || '') + '</p></div>' +
         '<div class="db-side"><div class="db-clock" id="dashClock">--:--:--</div><div class="db-date">' + UI.dateStr() +
           '<span class="db-updated" id="dbUpdated">更新于 ' + UI.nowStr(snap.meta.generatedAt) + '</span></div>' + badge + '</div>' +
@@ -222,7 +222,7 @@
         panel('小游戏作品类型占比', 'WORK MIX', V.shares(d.workList, d.done, colors), 'span2') +
         '<section class="card chart-box dash-panel span2"><div class="chart-title"><span>活动信息与任务口径</span><small>EVENT BRIEF</small></div>' +
           '<div class="event-grid">' +
-            '<div class="event-item"><span>实验室名称</span><b>' + E(ev.labName || '用友新道大数据实训室') + '</b></div>' +
+            '<div class="event-item"><span>实验室名称</span><b>' + E(ev.labName || '管理学院章鱼大数据实验室') + '</b></div>' +
             '<div class="event-item"><span>活动地点</span><b>' + E(ev.location || '至学楼D103') + '</b></div>' +
             '<div class="event-item"><span>活动主题</span><b>' + E(ev.theme || 'AI游戏奇遇记：零代码创作实战') + '</b></div>' +
             '<div class="event-item"><span>开放日主题</span><b>' + E(ev.openDayTheme || '开放共享，实践求真') + '</b></div>' +

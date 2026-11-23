@@ -4,7 +4,7 @@
 (function (global) {
   'use strict';
   var E = App.esc, $ = UI.$, $$ = UI.$$, ic = UI.icon, reg = App.register;
-  var COLS = ['姓名', '学号', '班级', '完成任务项', '第二课堂加分', '操作留痕'];
+  var COLS = ['姓名', '学号', '班级', '小游戏作品名称', '第二课堂加分', '操作留痕'];
 
   /* =====================================================
      4. 登记表生成打印
@@ -13,17 +13,17 @@
     render: function () {
       return UI.pageHead({
         eyebrow: 'PRINTABLE FORM · OFFICIAL RECORD',
-        title: '学生任务完成 <em>登记表</em>',
-        desc: '按群文件模板栏目生成正式纸质登记表。栏目完整覆盖姓名、学号、班级、完成任务项、第二课堂加分与操作留痕，便于现场填写与后续统一录入。A4 横版打印。',
+        title: '学生作品提交 <em>登记表</em>',
+        desc: '按实验室开放日模板栏目生成正式纸质登记表。栏目完整覆盖姓名、学号、班级、小游戏作品名称、第二课堂加分与操作留痕，便于现场填写与后续统一录入。A4 横版打印。',
         actions: '<button class="btn primary" id="rgPrint">' + ic('print') + '打印表格</button>' +
                  '<button class="btn" id="rgExport">' + ic('download') + '导出CSV模板</button>'
       }) +
       '<div class="card card-pad"><div class="grid g4" style="align-items:end">' +
         '<div class="field" style="margin:0"><label>打印行数</label><input class="input" id="rgRows" type="number" min="20" max="500" value="200"></div>' +
-        '<div class="field" style="margin:0"><label>表格标题</label><input class="input" id="rgTitle" value="管理学院学生任务完成登记表"></div>' +
+        '<div class="field" style="margin:0"><label>表格标题</label><input class="input" id="rgTitle" value="用友新道大数据实训室 作品提交登记表"></div>' +
         '<div class="field" style="margin:0"><label>每页行数（A4横版）</label><input class="input" id="rgPer" type="number" min="8" max="30" value="18"></div>' +
         '<div class="field" style="margin:0"><label>加分说明</label><input class="input" id="rgNote" value="第二课堂加分由学院统一认定"></div>' +
-      '</div><div class="notice mt16">' + ic('info') + '<div>打印前请与钉钉群 11月13日 附件的模板栏目逐项核对；本表为正式上报材料，现场大屏数据须与纸质填写保持一致。</div></div></div>' +
+      '</div><div class="notice mt16">' + ic('info') + '<div>打印前请与实验室开放日模板栏目逐项核对；本表为正式上报材料，现场大屏数据须与纸质填写保持一致。完成任意项目任务可加第二课堂 1 学时。</div></div></div>' +
       '<div class="card mt16" style="padding:18px"><div id="rgPreview"></div></div>';
     },
     init: function () {
@@ -74,7 +74,7 @@
         '</section>' +
         '<section class="card card-pad"><div class="mini-head">02 · 粘贴识别文本并解析</div>' +
           '<div class="hint" style="margin-bottom:8px">每行一名学生，字段用逗号 / 制表符 / 空格分隔：<br>姓名,学号,班级,任务项,是否完成(1/0)</div>' +
-          '<textarea class="input" id="ocText" style="min-height:180px" placeholder="张三,20260001,工商管理2201班,完成数据看板搭建,1"></textarea>' +
+          '<textarea class="input" id="ocText" style="min-height:180px" placeholder="张三,20260001,工商管理2201班,AI生成的小游戏作品,1"></textarea>' +
           '<div class="field-row mt16"><div class="field"><label>默认任务项（可选）</label><input class="input" id="ocTask" placeholder="未填写时使用"></div>' +
           '<div class="field"><label>完成状态</label><select class="input" id="ocDone"><option value="1">按文本中的标记</option><option value="0">全部未完成</option></select></div></div>' +
           '<button class="btn primary block" id="ocParse">' + ic('spark') + '解析并预览</button>' +
@@ -311,7 +311,7 @@
       '<div class="card card-pad" id="kbAddBox" style="display:none">' +
         '<div class="field-row"><div class="field"><label>任务标题</label><input class="input" id="kbTitle" placeholder="输入任务内容"></div>' +
         '<div class="field"><label>阶段</label><select class="input" id="kbGroup">' + q.map(function (x) { return '<option>' + x + '</option>'; }).join('') + '</select></div></div>' +
-        '<div class="field"><label>负责人</label><input class="input" id="kbOwner" placeholder="如：负责人 / 许跃雯 / 技术组"></div>' +
+        '<div class="field"><label>负责人</label><input class="input" id="kbOwner" placeholder="如：负责人 / 讲解员 / 技术组"></div>' +
         '<button class="btn primary" id="kbSave">' + ic('check') + '保存任务</button></div>' +
       '<div class="grid g3 mt16">' + groups.map(function (g) {
         var items = t.filter(function (x) { return x.status === g[0]; });
@@ -345,9 +345,9 @@
   reg('emergency', '应急预案', {
     render: function () {
       var plans = [
-        { t: '人少 · 空场风险', icon: 'info', tone: '', steps: ['提前告知石主任，安排一批固定学生全程在场做项目', '确保任意时段都有学生真实操作、屏幕有内容', '大屏同步展示签到与任务完成可视化数据'] },
-        { t: '人多 · 座位不足', icon: 'board', tone: 'warn', steps: ['与许跃雯一起去 104 搬椅子到 103', '先让大家坐着听讲解，避免拥挤', '上一波做完电脑空出，下一波接着上，分批轮换'] },
-        { t: '签到工具故障', icon: 'alert', tone: 'warn', steps: ['工具调试失败或现场卡顿，立即停用网页工具', '完全依靠纸质登记表完成签到与任务登记', '大屏停止展示，不影响第二课堂材料与佐证收集'] }
+        { t: '人少 · 空场风险', icon: 'info', tone: '', steps: ['提前安排一批固定学生全程在场进行AI创作', '确保任意时段都有学生真实操作、屏幕有作品', '大屏同步展示到场与作品提交可视化数据'] },
+        { t: '人多 · 座位不足', icon: 'board', tone: 'warn', steps: ['从相邻教室搬椅子到至学楼D103', '先让大家坐着听讲解，避免拥挤', '上一波做完电脑空出，下一波接着上，分批轮换'] },
+        { t: '工具故障', icon: 'alert', tone: 'warn', steps: ['工具调试失败或现场卡顿，立即停用网页工具', '完全依靠纸质登记表完成到场与作品登记', '大屏停止展示，不影响第二课堂材料与佐证收集'] }
       ];
       var paper = Store.state.settings.paperMode;
       return UI.pageHead({
@@ -364,8 +364,9 @@
           }).join('') + '</div></article>';
       }).join('') + '</div>' +
       '<section class="card card-pad mt16"><div class="mini-head">现场联络与物资清单</div>' +
-        '<dl class="kv"><dt>固定学生</dt><dd>石主任协调安排，保证全程在场</dd>' +
-        '<dt>搬运支援</dt><dd>许跃雯 · 104 → 103 椅子</dd>' +
+        '<dl class="kv"><dt>场地</dt><dd>至学楼D103 · 用友新道大数据实训室</dd>' +
+        '<dt>固定学生</dt><dd>提前协调安排，保证全程在场创作</dd>' +
+        '<dt>搬运支援</dt><dd>相邻教室 → D103 椅子</dd>' +
         '<dt>引导讲解</dt><dd>先集中讲解，再分批上机</dd>' +
         '<dt>兜底材料</dt><dd>纸质登记表（约200行）足够备用</dd>' +
         '<dt>氛围</dt><dd>轻音乐低音量，巡视前提前调好</dd></dl></section>';
@@ -385,25 +386,25 @@
       return UI.pageHead({
         eyebrow: 'LEADERSHIP TOUR · SHOWCASE MODE',
         title: '领导巡视 <em>展示模式</em>',
-        desc: '巡视专用：左侧实时可视化签到与任务完成数据，右侧轮播学生成果与佐证照片。确保现场学生真实操作、屏幕有内容、氛围到位。',
+        desc: '巡视专用：左侧实时可视化到场与作品提交数据，右侧轮播学生AI小游戏作品与佐证照片。地点 至学楼D103，确保现场学生真实创作、屏幕有作品、氛围到位。',
         actions: '<button class="btn primary" id="ldFull">' + ic('screen') + '全屏展示</button>' +
                  '<button class="btn" id="ldMusic">' + ic('music') + '氛围音乐</button>' +
                  '<button class="btn" id="ldRotate">' + ic('spark') + '开始轮播</button>'
       }) +
-      '<div class="dash-hero"><h2>管理学院 · 大数据与人工智能实践教学活动</h2>' +
-        '<p>现场实况 · ' + UI.dateStr() + ' · 学生操作进行中 · 大屏数据与纸质登记一致</p></div>' +
+      '<div class="dash-hero"><h2>用友新道大数据实训室 · AI游戏奇遇记：零代码创作实战</h2>' +
+        '<p>地点 至学楼D103 · ' + UI.dateStr() + ' · 学生AI创作进行中 · 大屏数据与纸质登记一致</p></div>' +
       '<div class="grid g4 mt16">' +
-        UI.statCard({ tone: 'a', label: '现场签到', value: st.total, unit: '人', foot: '实时统计', icon: 'check' }) +
-        UI.statCard({ tone: 'c', label: '任务完成', value: st.done, unit: '人', foot: '完成率 ' + st.rate + '%', icon: 'spark', bar: st.rate }) +
+        UI.statCard({ tone: 'a', label: '现场到场', value: st.total, unit: '人', foot: '实时统计', icon: 'check' }) +
+        UI.statCard({ tone: 'c', label: '作品提交', value: st.done, unit: '人', foot: '提交率 ' + st.rate + '%', icon: 'spark', bar: st.rate }) +
         UI.statCard({ tone: 'b', label: '成果归档', value: arc.length, unit: '份', foot: '项目材料佐证', icon: 'box' }) +
         UI.statCard({ tone: 'd', label: '佐证照片', value: s.photos.length, unit: '张', foot: '一人一张', icon: 'camera' }) +
       '</div>' +
       '<div class="grid g2 mt16">' +
-        '<section class="card chart-box"><div class="chart-title">班级任务完成进度 <small>REAL-TIME</small></div>' +
+        '<section class="card chart-box"><div class="chart-title">班级作品提交进度 <small>REAL-TIME</small></div>' +
           '<div class="bars">' + (Object.keys(st.byClass).length ? Object.keys(st.byClass).map(function (c) {
             var v = st.byClass[c]; return '<div class="bar-row"><span>' + E(c) + '</span><div class="bg"><div class="bf" data-bar="' + (v.total ? Math.round(v.done / v.total * 100) : 0) + '"></div></div><span class="bn">' + v.done + '/' + v.total + '</span></div>';
-          }).join('') : '<div class="empty">等待签到数据</div>') + '</div>' +
-          '<div class="divider"></div><div class="mini-head">最近签到动态</div><div class="live-list">' +
+          }).join('') : '<div class="empty">等待到场数据</div>') + '</div>' +
+          '<div class="divider"></div><div class="mini-head">最近提交动态</div><div class="live-list">' +
             (s.students.length ? s.students.slice(0, 6).map(function (x) {
               return '<div class="live-item"><div class="avatar">' + E(x.name.slice(0, 1)) + '</div><div class="who"><b>' + E(x.name) + '</b><span>' + E(x.className) + ' · ' + E(x.task || '项目中') + '</span></div><time>' + UI.nowStr(x.time) + '</time></div>';
             }).join('') : '<div class="empty">暂无动态</div>') + '</div>' +
@@ -416,7 +417,7 @@
         '</section>' +
       '</div>' +
       '<section class="card card-pad mt16"><div class="mini-head">巡视前检查清单</div>' +
-        '<div class="grid g3">' + [['学生操作', '每人屏幕有项目内容，非空白桌面'], ['氛围', '轻音乐低音量，讲解与操作有序'], ['材料', '纸质登记表就位，大屏数据同步一致']].map(function (x) {
+        '<div class="grid g3">' + [['学生创作', '每人屏幕有AI小游戏作品或操作步骤，非空白桌面'], ['氛围', '轻音乐低音量，讲解与操作有序'], ['材料', '纸质登记表就位，大屏数据同步一致']].map(function (x) {
           return '<div class="notice">' + ic('check') + '<div><b>' + x[0] + '</b><br>' + x[1] + '</div></div>';
         }).join('') + '</div></section>';
     },

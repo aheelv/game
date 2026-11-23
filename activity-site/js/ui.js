@@ -44,7 +44,7 @@
     var rows = Store.state.students.map(function (s) {
       return [s.name, s.sid, s.className, s.task, s.completed ? '已完成' : '未完成', dateStr(s.time), s.recheck ? '是' : '否'];
     });
-    download('签到与任务完成记录_' + Date.now() + '.csv', toCSV(['姓名', '学号', '班级', '完成任务项', '是否完成', '签到时间', '复核'], rows), 'text/csv;charset=utf-8');
+    download('AI游戏创作到场与作品提交记录_' + Date.now() + '.csv', toCSV(['姓名', '学号', '班级', '小游戏作品名称', '是否提交', '到场时间', '复核'], rows), 'text/csv;charset=utf-8');
   }
   function exportScores() {
     var rows = Store.state.scores.map(function (s) { return [s.name, s.sid, s.className, s.task, s.score, s.trace || '', s.time || '']; });

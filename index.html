@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f7fb">
+  <title>星集游戏舱 · 20 款单页小游戏</title>
+  <link rel="stylesheet" href="assets/css/common.css">
+  <link rel="stylesheet" href="assets/css/hub.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">星</span>
+      <span>星集游戏舱<small>ARCADE COLLECTION</small></span>
+    </a>
+    <nav class="nav">
+      <a class="active" href="index.html">游戏大厅</a>
+      <a href="generator.html">提示词生成器</a>
+      <a href="activity-site/index.html">智汇管理平台</a>
+    </nav>
+  </header>
+
+  <main class="page">
+    <section class="hero">
+      <span class="eyebrow">20 GAMES · ZERO DEPENDENCIES</span>
+      <h1>打开就能玩，随手就能改。</h1>
+      <p class="lead">20 款不同类型的单页小游戏，统一支持开始、暂停、重开、计分、难度选择与玩法说明。每款游戏都配有可复用的参数化提示词模板，方便你继续二次创作。</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#games">开始挑游戏</a>
+        <a class="btn" href="generator.html">生成我的游戏提示词</a>
+      </div>
+      <div class="stats-row">
+        <div><div class="stat-num">20</div><div class="stat-label">款可玩游戏</div></div>
+        <div><div class="stat-num">6</div><div class="stat-label">种游戏品类</div></div>
+        <div><div class="stat-num">13</div><div class="stat-label">个统一参数</div></div>
+        <div><div class="stat-num">0</div><div class="stat-label">外部依赖</div></div>
+      </div>
+    </section>
+
+    <section class="featured" aria-label="推荐项目">
+      <a class="featured-card" href="activity-site/index.html">
+        <div class="featured-thumb">
+          <img src="activity-site/preview-desktop.png" alt="智汇管理平台预览图">
+        </div>
+        <div class="featured-body">
+          <span class="featured-tag">NEW · 教学活动平台</span>
+          <h2>智汇管理 · 大数据与人工智能实践教学活动平台</h2>
+          <p>管理学院第二课堂实践活动一体化工作台：签到登记、数据大屏、登记表打印、任务看板与成果归档，本地离线即可使用。</p>
+          <span class="featured-link">点击进入平台 <span aria-hidden="true">→</span></span>
+        </div>
+      </a>
+    </section>
+
+    <section id="games">
+      <div class="toolbar">
+        <div class="search"><input id="searchInput" type="text" placeholder="搜索游戏名称或英文名…" aria-label="搜索游戏"></div>
+        <div class="filters" id="filters"></div>
+      </div>
+      <div class="game-grid" id="gameGrid"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>星集游戏舱 · 纯前端静态项目，无需构建工具</span>
+    <span>提示词参数命名统一，模板可直接二次修改</span>
+  </footer>
+
+  <script src="assets/js/core/utils.js"></script>
+  <script src="assets/js/core/sound.js"></script>
+  <script src="assets/js/core/registry.js"></script>
+  <script src="assets/js/data/games.js"></script>
+  <script src="assets/js/core/app.js"></script>
+</body>
+</html>

@@ -20,7 +20,7 @@
       }) +
       '<div class="card card-pad"><div class="grid g4" style="align-items:end">' +
         '<div class="field" style="margin:0"><label>打印行数</label><input class="input" id="rgRows" type="number" min="20" max="500" value="200"></div>' +
-        '<div class="field" style="margin:0"><label>表格标题</label><input class="input" id="rgTitle" value="用友新道大数据实训室 作品提交登记表"></div>' +
+        '<div class="field" style="margin:0"><label>表格标题</label><input class="input" id="rgTitle" value="管理学院章鱼大数据实验室 作品提交登记表"></div>' +
         '<div class="field" style="margin:0"><label>每页行数（A4横版）</label><input class="input" id="rgPer" type="number" min="8" max="30" value="18"></div>' +
         '<div class="field" style="margin:0"><label>加分说明</label><input class="input" id="rgNote" value="第二课堂加分由学院统一认定"></div>' +
       '</div><div class="notice mt16">' + ic('info') + '<div>打印前请与实验室开放日模板栏目逐项核对；本表为正式上报材料，现场大屏数据须与纸质填写保持一致。完成任意项目任务可加第二课堂 1 学时。</div></div></div>' +
@@ -369,7 +369,7 @@
           }).join('') + '</div></article>';
       }).join('') + '</div>' +
       '<section class="card card-pad mt16"><div class="mini-head">现场联络与物资清单</div>' +
-        '<dl class="kv"><dt>场地</dt><dd>至学楼D103 · 用友新道大数据实训室</dd>' +
+        '<dl class="kv"><dt>场地</dt><dd>至学楼D103 · 管理学院章鱼大数据实验室</dd>' +
         '<dt>固定学生</dt><dd>提前协调安排，保证全程在场创作</dd>' +
         '<dt>搬运支援</dt><dd>相邻教室 → D103 椅子</dd>' +
         '<dt>引导讲解</dt><dd>先集中讲解，再分批上机</dd>' +
@@ -397,7 +397,7 @@
                  '<button class="btn" id="ldMusic">' + ic('music') + '氛围音乐</button>' +
                  '<button class="btn" id="ldRotate">' + ic('spark') + '开始轮播</button>'
       }) +
-      '<div class="dash-hero"><h2>用友新道大数据实训室 · AI游戏奇遇记：零代码创作实战</h2>' +
+      '<div class="dash-hero"><h2>管理学院章鱼大数据实验室 · AI游戏奇遇记：零代码创作实战</h2>' +
         '<p>地点 至学楼D103 · ' + UI.dateStr() + ' · 学生AI创作进行中 · 大屏数据与纸质登记一致</p></div>' +
       '<div class="grid g4 mt16">' +
         UI.statCard({ tone: 'a', label: '现场到场', value: st.total, unit: '人', foot: '实时统计', icon: 'check' }) +

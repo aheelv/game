@@ -97,6 +97,7 @@
       name: String(raw.name == null ? '' : raw.name).trim() || '未填姓名',
       sid: sid,
       className: String(raw.className == null ? '' : raw.className).trim() || '未填',
+      counselor: String(raw.counselor == null ? '' : raw.counselor).trim() || '未填辅导员',
       task: String(raw.task == null ? '' : raw.task).trim(),
       completed: done,
       time: time,
@@ -128,6 +129,7 @@
   /* 演示数据：确定性生成，仅用于人工预览或最终降级 */
   function demoRecords() {
     var classes = ['大数据2301', '大数据2302', '人工智能2301', '人工智能2302', '金融科技2301', '数据科学2301'];
+    var counselors = ['张老师', '李老师', '王老师', '陈老师', '刘老师', '赵老师'];
     var works = ['AI贪吃蛇', 'AI Flappy Bird', 'AI 2048', 'AI 打砖块', 'AI 记忆翻牌', 'AI 迷宫探险', 'AI 飞机大战', 'AI 拼图'];
     var sn = ['王', '李', '张', '刘', '陈', '杨', '黄', '赵', '周', '吴', '徐', '孙', '马', '朱', '胡', '林'];
     var gn = ['子涵', '雨桐', '浩然', '思远', '梓萱', '一鸣', '嘉怡', '宇轩', '欣妍', '泽宇', '可欣', '明哲', '佳宁', '文博'];
@@ -141,6 +143,7 @@
         name: sn[Math.floor(rnd() * sn.length)] + gn[Math.floor(rnd() * gn.length)],
         sid: '2026' + String(100000 + Math.floor(rnd() * 899999)),
         className: classes[Math.floor(rnd() * classes.length)],
+        counselor: counselors[i % counselors.length],
         task: works[Math.floor(rnd() * works.length)],
         completed: rnd() < 0.74,
         time: new Date(2026, 10, 25, hr, mi).toISOString(),

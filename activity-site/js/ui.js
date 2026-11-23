@@ -27,6 +27,52 @@
     stack.appendChild(el);
     setTimeout(function () { el.style.opacity = '0'; el.style.transform = 'translateY(10px)'; setTimeout(function () { el.remove(); }, 300); }, 3000);
   }
+  /* 二次确认弹窗：返回 Promise<boolean>，样式与站内统一，支持危险操作强调 */
+  function confirmDialog(o) {
+    o = o || {};
+    return new Promise(function (resolve) {
+      var old = $('#confirmDialog');
+      if (old && old.parentNode) old.parentNode.removeChild(old);
+      var mask = document.createElement('div');
+      mask.className = 'confirm-mask';
+      mask.id = 'confirmDialog';
+      mask.innerHTML =
+        '<div class="confirm-box" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMsg">' +
+          '<div class="confirm-ico ' + (o.danger ? 'danger' : '') + '">' + icon(o.danger ? 'trash' : 'info') + '</div>' +
+          '<h3 class="confirm-title" id="confirmTitle">' + esc(o.title || '请确认') + '</h3>' +
+          '<div class="confirm-msg" id="confirmMsg">' + (o.message || '') + '</div>' +
+          '<div class="confirm-tip">' + esc(o.tip || '此操作不可恢复，请谨慎确认。') + '</div>' +
+          '<div class="confirm-actions">' +
+            '<button type="button" class="btn" data-cf="cancel">' + esc(o.cancelText || '取消') + '</button>' +
+            '<button type="button" class="btn ' + (o.danger ? 'danger-solid' : 'primary') + '" data-cf="ok">' + esc(o.okText || '确认删除') + '</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(mask);
+      /* 强制回流后触发入场动画 */
+      /* jshint ignore:start */
+      void mask.offsetWidth;
+      /* jshint ignore:end */
+      mask.classList.add('show');
+      function close(v) {
+        mask.classList.remove('show');
+        setTimeout(function () { if (mask.parentNode) mask.parentNode.removeChild(mask); }, 180);
+        if (typeof o.onClose === 'function') o.onClose();
+        resolve(v);
+      }
+      var okBtn = mask.querySelector('[data-cf="ok"]');
+      var cancelBtn = mask.querySelector('[data-cf="cancel"]');
+      if (okBtn) okBtn.addEventListener('click', function () { close(true); });
+      if (cancelBtn) cancelBtn.addEventListener('click', function () { close(false); });
+      mask.addEventListener('click', function (e) { if (e.target === mask) close(false); });
+      function onKey(e) {
+        if (e.key === 'Escape' || e.keyCode === 27) { document.removeEventListener('keydown', onKey); close(false); }
+        else if (e.key === 'Enter' && okBtn) { document.removeEventListener('keydown', onKey); okBtn.click(); }
+      }
+      document.addEventListener('keydown', onKey);
+      if (okBtn && okBtn.focus) okBtn.focus();
+    });
+  }
+
   function download(name, content, mime) {
     try {
       var blob = new Blob(['\ufeff' + content], { type: mime || 'text/plain;charset=utf-8' });
@@ -152,6 +198,7 @@
 
   global.UI = {
     esc: esc, $: $, $$: $$, nowStr: nowStr, dateStr: dateStr, toast: toast,
+    confirm: confirmDialog,
     download: download, toCSV: toCSV, exportStudents: exportStudents, exportScores: exportScores,
     icon: icon, statCard: statCard, pageHead: pageHead, animateBars: animateBars,
     toggleMusic: toggleMusic, setVolume: setVolume

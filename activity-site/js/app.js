@@ -5,36 +5,23 @@
   'use strict';
   var E = UI.esc, $ = UI.$, $$ = UI.$$, ic = UI.icon;
 
+  /* 仅保留两个入口：学生签到登记 + AI创作大屏 */
   var NAV = [
-    { group: '总览', items: [
-      { id: 'home', name: '活动总览', icon: 'home' }
-    ]},
-    { group: '现场工具', items: [
-      { id: 'dashboard', name: 'AI创作大屏', icon: 'screen', badge: 'LIVE' },
+    { group: '现场应用', items: [
       { id: 'checkin', name: '学生签到登记', icon: 'check' },
-      { id: 'registry', name: '登记表生成打印', icon: 'sheet' },
-      { id: 'ocr', name: '纸质表识别录入', icon: 'scan' }
-    ]},
-    { group: '数据管理', items: [
-      { id: 'scores', name: '第二课堂加分', icon: 'plus' },
-      { id: 'photos', name: '佐证照片核查', icon: 'camera' },
-      { id: 'archive', name: '学生成果归档', icon: 'box' }
-    ]},
-    { group: '组织与保障', items: [
-      { id: 'kanban', name: '任务分工看板', icon: 'board' },
-      { id: 'emergency', name: '应急预案', icon: 'alert' },
-      { id: 'leader', name: '领导巡视展示', icon: 'crown' }
+      { id: 'dashboard', name: 'AI创作大屏', icon: 'screen', badge: 'LIVE' }
     ]}
   ];
 
   var PAGES = {};
-  var current = 'home';
+  var DEFAULT_PAGE = 'checkin';
+  var current = DEFAULT_PAGE;
 
   /* ---------------- 路由 ---------------- */
   function go(id) {
     if (global.__dashCleanup) { global.__dashCleanup(); global.__dashCleanup = null; }
     if (global.__ldTimer) { global.__ldTimer(); global.__ldTimer = null; }
-    if (!PAGES[id]) id = 'home';
+    if (!PAGES[id]) id = DEFAULT_PAGE;
     current = id;
     location.hash = id;
     renderNav();
@@ -63,89 +50,16 @@
     $('#menuToggle').addEventListener('click', function () { $('#sidebar').classList.add('open'); $('#overlay').classList.add('show'); });
     $('#overlay').addEventListener('click', function () { $('#sidebar').classList.remove('open'); $('#overlay').classList.remove('show'); });
     $('#btnMusic').addEventListener('click', function () { UI.toggleMusic(); });
-    $('#btnPaper').addEventListener('click', function () {
-      var v = !Store.state.settings.paperMode;
-      Store.setSetting('paperMode', v);
-      document.body.classList.toggle('paper-mode', v);
-      $('#btnPaper').classList.toggle('on', v);
-      $('#sysStatusText').textContent = v ? '纸质应急模式 · 网页工具已停用' : '系统就绪 · 本地离线可用';
-      UI.toast(v ? '已切换纸质应急模式：以纸质登记表为准' : '已退出纸质应急模式', v ? 'warn' : 'ok');
-    });
     setInterval(function () { $('#clock').textContent = UI.nowStr(); }, 1000);
     $('#clock').textContent = UI.nowStr();
-    var paper = Store.state.settings.paperMode;
-    document.body.classList.toggle('paper-mode', paper);
-    $('#btnPaper').classList.toggle('on', paper);
     global.addEventListener('hashchange', function () {
-      var id = location.hash.replace('#', '') || 'home';
-      if (id !== current) go(id);
+      var id = location.hash.replace('#', '');
+      if ((id === 'checkin' || id === 'dashboard') && id !== current) go(id);
     });
   }
 
   /* =====================================================
-     1. 活动总览
-     ===================================================== */
-  PAGES.home = {
-    title: '活动总览',
-    render: function () {
-      var d = currentStats(), s = Store.state;
-      var st = { total: d.total, done: d.done, rate: d.rate, classes: d.classes };
-      var doneTasks = s.tasks.filter(function (t) { return t.status === 'done'; }).length;
-      var launches = [
-        { id: 'checkin', icon: 'check', t: '学生到场登记', d: '采集姓名、学号、班级、辅导员姓名、到场时间与作品提交情况，作为大屏数据源。' },
-        { id: 'dashboard', icon: 'screen', t: 'AI创作数据大屏', d: '实时可视化到场人数、作品提交率、班级分布与任务进度，支持导出。' },
-        { id: 'registry', icon: 'sheet', t: '登记表生成打印', d: '按模板栏目生成约200行正式纸质登记表，A4 横版直接打印。' },
-        { id: 'leader', icon: 'crown', t: '领导巡视展示', d: '一键进入展示模式：可视化数据 + 学生小游戏作品与照片轮播。' }
-      ];
-      return UI.pageHead({
-        eyebrow: 'AI GAME CREATION · ZERO-CODE WORKSHOP',
-        title: 'AI游戏奇遇记 · <em>零代码创作实战</em>',
-        desc: '用友新道大数据实训室（至学楼D103）实验室开放日工作台。借助AI工具零代码完成小游戏作品并现场提交，覆盖到场登记、登记表打印、现场执行与巡视展示全流程，纸质材料与现场大屏数据保持一致。',
-        actions: '<button class="btn primary" data-go="dashboard">' + ic('screen') + '打开创作大屏</button>' +
-                 '<button class="btn" data-go="registry">' + ic('print') + '生成登记表</button>'
-      }) +
-      '<div class="grid g4 stagger">' +
-        UI.statCard({ tone: 'a', label: '到场学生', value: st.total, unit: '人', foot: '现场实时累计', icon: 'check' }) +
-        UI.statCard({ tone: 'c', label: '作品提交', value: st.done, unit: '人', foot: '提交率 ' + st.rate + '%', icon: 'spark', bar: st.rate }) +
-        UI.statCard({ tone: 'b', label: '覆盖班级', value: st.classes, unit: '个', foot: '参与班级数量', icon: 'board' }) +
-        UI.statCard({ tone: 'd', label: '筹备进度', value: doneTasks + '/' + s.tasks.length, foot: '任务看板完成项', icon: 'board', bar: Math.round(doneTasks / s.tasks.length * 100) }) +
-      '</div>' +
-      '<div class="grid g-2-1 mt20">' +
-        '<section class="card card-pad"><div class="mini-head">活动五阶段流程</div>' +
-          '<div class="timeline">' +
-          [['会前对接', '操作步骤确认 · AI工具与账号准备 · 场地布置 · 登记表与工具开发'],
-           ['表格制作', '按模板制作约200行登记表，含姓名/学号/班级/辅导员/作品/加分/留痕'],
-           ['现场执行', '到场签到 · AI零代码创作 · 作品现场提交 · 佐证照片 · 氛围音乐'],
-           ['应急预案', '人少固定学生 · 人多搬椅分批 · 工具故障切纸质'],
-           ['领导巡视', '真实创作 · 屏幕有作品 · 大屏数据 + 成果照片展示']].map(function (x, i) {
-            return '<div class="tl-item ' + (i === 0 ? 'done' : '') + '"><h4>0' + (i + 1) + ' · ' + E(x[0]) + '</h4><p>' + E(x[1]) + '</p></div>';
-          }).join('') + '</div>' +
-        '</section>' +
-        '<section class="card card-pad"><div class="mini-head">关键口径</div>' +
-          '<div class="notice">' + ic('info') + '<div><b>双轨一致</b><br>纸质登记表为正式上报材料，大屏数据仅用于现场展示，二者信息保持一致。完成任意项目任务可加第二课堂 1 学时。</div></div>' +
-          '<div class="notice warn mt16">' + ic('alert') + '<div><b>故障兜底</b><br>工具卡顿即停用，完全依靠纸质表完成到场与作品登记，不影响第二课堂佐证收集。</div></div>' +
-          '<div class="divider"></div>' +
-          '<dl class="kv"><dt>名称</dt><dd>用友新道大数据实训室</dd>' +
-          '<dt>地点</dt><dd>至学楼D103</dd>' +
-          '<dt>主题</dt><dd>AI游戏奇遇记：零代码创作实战</dd>' +
-          '<dt>作品命名</dt><dd class="mono">学号+姓名</dd>' +
-          '<dt>照片内容</dt><dd>本人 + 电脑上的小游戏作品界面</dd>' +
-          '<dt>音乐</dt><dd>低音量，巡视前调好氛围</dd></dl>' +
-        '</section>' +
-      '</div>' +
-      '<div class="mini-head mt24">快速进入</div>' +
-      '<div class="grid g4 stagger">' + launches.map(function (l) {
-        return '<article class="card launch" data-go="' + l.id + '"><span class="li">' + ic(l.icon) + '</span>' +
-          '<h3>' + E(l.t) + '</h3><p>' + E(l.d) + '</p><span class="go">进入模块 ' + ic('arrow') + '</span></article>';
-      }).join('') + '</div>';
-    },
-    init: function (root) {
-      $$('[data-go]', root).forEach(function (b) { b.addEventListener('click', function () { go(b.getAttribute('data-go')); }); });
-    }
-  };
-
-  /* =====================================================
-     2. AI创作数据大屏（多维可视化版）
+     1. AI创作数据大屏（多维可视化版）
      ===================================================== */
 
   /* 大屏卡片组件 */
@@ -267,7 +181,8 @@
         eyebrow: 'AI GAME CREATION · LIVE DASHBOARD',
         title: 'AI游戏奇遇记 · 零代码创作 <em>实时大屏</em>',
         desc: '用友新道大数据实训室（至学楼D103）现场数据全景。展示到场趋势、作品提交、班级分布、参与热度与成果亮点。',
-        actions: '<button class="btn" id="dashDemo">' + ic('spark') + (usingDemo ? '查看现场数据' : '演示数据预览') + '</button>' +
+        actions: '<button class="btn" id="dashRefresh">' + ic('spark') + '刷新数据</button>' +
+                 '<button class="btn" id="dashDemo">' + ic('board') + (usingDemo ? '查看现场数据' : '演示数据预览') + '</button>' +
                  '<button class="btn" id="dashScroll">' + ic('board') + '自动巡屏</button>' +
                  '<button class="btn" id="dashExport">' + ic('download') + '导出数据</button>' +
                  '<button class="btn primary" id="dashFull">' + ic('screen') + '全屏展示</button>'
@@ -333,6 +248,12 @@
       clearInterval(dashTimer); clearInterval(scrollTimer);
       dashTimer = scrollTimer = null;
       var cfg = DataSource.getConfig();
+      $('#dashRefresh').addEventListener('click', function () {
+        /* 主动重新读取签到数据并刷新快照；local 模式下同步生效，随后重绘大屏 */
+        if (global.DataSource && DataSource.refresh) DataSource.refresh();
+        go('dashboard');
+        UI.toast('已刷新：大屏数据已与最新签到信息同步', 'ok');
+      });
       $('#dashExport').addEventListener('click', UI.exportStudents);
       $('#dashFull').addEventListener('click', function () {
         var el = document.documentElement;
@@ -389,18 +310,38 @@
   };
 
   /* =====================================================
-     3. 学生签到登记
+     2. 学生签到登记
      ===================================================== */
+  var lastCheckinResult = null;
+
+  /* 提交成功反馈面板：明确告知学生签到结果与数据已同步 */
+  function ckSuccessHtml(r) {
+    var status = r.completed ? '<span class="tag ok">已提交作品</span>' : '<span class="tag warn">未提交作品</span>';
+    return '<div class="checkin-success fade-in" id="ckSuccess" role="status">' +
+      '<div class="cs-mark">' + ic('check') + '</div>' +
+      '<div class="cs-body"><div class="cs-title">' + (r.updated ? '签到信息已更新' : '签到提交成功') + '</div>' +
+        '<div class="cs-name">' + E(r.name) + '</div>' +
+        '<div class="cs-meta"><span class="mono">' + E(r.sid) + '</span><span>' + E(r.className) + '</span>' +
+          '<span>辅导员 ' + E(r.counselor || '—') + '</span>' + status + '</div>' +
+        '<div class="cs-sync"><span class="pulse-dot"></span> 信息已保存并实时同步至 AI 创作大屏</div>' +
+      '</div>' +
+      '<div class="cs-actions"><button class="btn primary" data-go="dashboard">' + ic('screen') + '查看实时大屏</button>' +
+        '<button class="btn" id="ckAgain">' + ic('plus') + '继续签到</button></div>' +
+    '</div>';
+  }
+
   PAGES.checkin = {
-      title: '学生到场登记',
+      title: '学生签到登记',
     render: function () {
       var s = Store.state;
+      var success = lastCheckinResult ? ckSuccessHtml(lastCheckinResult) : '';
       return UI.pageHead({
         eyebrow: 'CHECK-IN · STUDENT REGISTRATION',
         title: '学生到场与作品登记',
         desc: '采集姓名、学号、班级、辅导员姓名、到场时间与作品提交情况。借助AI工具零代码完成小游戏作品并现场提交，数据实时汇入大屏。',
         actions: '<button class="btn" id="ckExport">' + ic('download') + '导出记录</button>'
       }) +
+      success +
       '<div class="grid g-1-2">' +
         '<section class="card card-pad"><div class="mini-head">扫码自助签到</div>' +
           '<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">' +
@@ -448,12 +389,24 @@
         };
         if (!rec.name || !rec.sid || !rec.className || !rec.counselor) { UI.toast('请填写姓名、学号、班级与辅导员姓名', 'err'); return; }
         var r = Store.addStudent(rec);
+        /* 立即同步数据源（不等防抖），保证随后切换/刷新大屏读到的是最新签到数据 */
+        if (global.DataSource && DataSource.refresh) DataSource.refresh();
+        /* 记录本次提交结果，重渲染后显示成功反馈面板 */
+        lastCheckinResult = {
+          name: rec.name, sid: rec.sid, className: rec.className, counselor: rec.counselor,
+          task: rec.task, completed: rec.completed, updated: !!r.updated
+        };
         UI.toast(r.updated ? '已更新 ' + rec.name + ' 的签到信息' : '签到成功：' + rec.name, 'ok');
-        form.reset(); completed = 0; $$('#ckSeg button')[0].classList.add('on'); $$('#ckSeg button')[1].classList.remove('on');
         go('checkin');
+        /* 成功后滚动到反馈面板，学生在手机上也能立刻看到结果 */
+        var fb = $('#ckSuccess');
+        if (fb && fb.scrollIntoView) fb.scrollIntoView({ behavior: 'smooth', block: 'center' });
       });
       bindCkActions();
       $('#ckExport').addEventListener('click', UI.exportStudents);
+      var again = $('#ckAgain');
+      if (again) again.addEventListener('click', function () { lastCheckinResult = null; go('checkin'); });
+      $$('[data-go]', root).forEach(function (b) { b.addEventListener('click', function () { go(b.getAttribute('data-go')); }); });
     }
   };
   function ckRows() {
@@ -514,8 +467,10 @@
     DataSource.subscribe(updateSysStatus);
     updateSysStatus(DataSource.getSnapshot());
     renderNav();
-    var initial = location.hash.replace('#', '') || Store.state.settings.lastPage || 'home';
-    go(PAGES[initial] ? initial : 'home');
+    var hash = location.hash.replace('#', '');
+    /* 只保留签到与大屏两个有效页面；旧书签/失效 hash 一律回落到默认页 */
+    var initial = (hash === 'checkin' || hash === 'dashboard') ? hash : DEFAULT_PAGE;
+    go(initial);
   }
   // 延迟到 DOM 就绪后启动，确保后续扩展模块脚本已完成注册
   if (document.readyState === 'loading') {

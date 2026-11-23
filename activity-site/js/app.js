@@ -153,7 +153,7 @@
     return '<div class="db-kpi t' + tone + '"><div class="dk-top"><span class="dk-ico">' + ic(icon) + '</span><span class="dk-label">' + E(label) + '</span></div>' +
       '<div class="dk-mid"><b>' + value + '</b><small>' + E(unit) + '</small></div>' +
       '<div class="dk-foot">' + E(foot) + '</div>' +
-      '<div class="dk-spark">' + (global.Viz && sparkData ? global.Viz.spark(sparkData, ['#2de2e6', '#9b6dff', '#3ee0a0', '#ffb454', '#f472b6', '#4d7cfe'][{'a':0,'b':1,'c':2,'d':3}[tone] || 0]) : '') + '</div></div>';
+      '<div class="dk-spark">' + (global.Viz && sparkData ? global.Viz.spark(sparkData, ['#00e6d2', '#7c4dff', '#2ee6a8', '#ff8a3d', '#ff5c9d', '#3d7dff'][{'a':0,'b':1,'c':2,'d':3}[tone] || 0]) : '') + '</div></div>';
   }
   function panel(title, en, body, cls) {
     return '<section class="card chart-box dash-panel ' + (cls || '') + '">' +
@@ -239,7 +239,7 @@
       var cfg = snap.config || {};
       var d = derive(snap.records, cfg);
       var V = global.Viz;
-      var colors = (cfg.theme && cfg.theme.colors) || ['#2de2e6', '#9b6dff', '#f472b6', '#3ee0a0', '#ffb454', '#4d7cfe'];
+      var colors = (cfg.theme && cfg.theme.colors) || ['#00e6d2', '#7c4dff', '#ff5c9d', '#2ee6a8', '#ff8a3d', '#3d7dff'];
       var usingDemo = snap.meta.source === 'demo';
       var stale = !!snap.meta.stale;
       var ev = cfg.event || {};
@@ -293,9 +293,9 @@
           { name: '累计提交', color: colors[1], data: d.arrD }
         ]), 'span2') +
         panel('作品提交构成', 'COMPLETION', V.donut(d.rate, { label: '作品提交率', color: colors[0] }) +
-          '<div class="vz-donut-legend"><div><i style="background:#3ee0a0"></i>已提交 <b>' + d.done + '</b> 人</div>' +
-          '<div><i style="background:#ffb454"></i>待提交 <b>' + (d.total - d.done) + '</b> 人</div>' +
-          '<div><i style="background:#9b6dff"></i>复核记录 <b>' + d.rechecks + '</b> 条</div></div>', '') +
+          '<div class="vz-donut-legend"><div><i style="background:#2ee6a8"></i>已提交 <b>' + d.done + '</b> 人</div>' +
+          '<div><i style="background:#ff8a3d"></i>待提交 <b>' + (d.total - d.done) + '</b> 人</div>' +
+          '<div><i style="background:#7c4dff"></i>复核记录 <b>' + d.rechecks + '</b> 条</div></div>', '') +
         panel('班级到场 / 提交对比', 'BY CLASS', V.bars(d.cls.map(function (c) { return { label: c, a: d.byClass[c].total, b: d.byClass[c].done }; })), '') +
         panel('参与维度画像', 'MULTI-DIMENSIONAL', V.radar(['到场规模', '提交完成', '班级覆盖', '作品多样', '过程规范'], d.radar), '') +
         panel('班级 × 时段参与热度', 'HEATMAP', V.heatmap(d.cls.length ? d.cls : ['暂无班级'], d.labels, d.cls.length ? d.cls.map(function (c) {
@@ -490,7 +490,7 @@
       var on = f === null ? rnd(x, y) : f;
       if (on) cells += '<rect x="' + x + '" y="' + y + '" width="1" height="1"/>';
     }
-    el.innerHTML = '<svg viewBox="-1 -1 23 23" style="fill:#0a1022;stroke:none">' + cells + '</svg>';
+    el.innerHTML = '<svg viewBox="-1 -1 23 23" style="fill:#091126;stroke:none">' + cells + '</svg>';
   }
 
   /* 后续模块在下一节追加 */

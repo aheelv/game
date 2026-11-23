@@ -13,7 +13,7 @@
     archives: [],
     photos: [],
     tasks: [
-      { id: 't1', group: '会前对接', title: '确认实验室开放日活动方案与模板格式，明确至学楼D103场地与栏目要求', owner: '负责人', status: 'todo', note: '模板栏目：姓名/学号/班级/作品名称/第二课堂加分/操作留痕' },
+      { id: 't1', group: '会前对接', title: '确认实验室开放日活动方案与模板格式，明确至学楼D103场地与栏目要求', owner: '负责人', status: 'todo', note: '模板栏目：姓名/学号/班级/辅导员姓名/作品名称/第二课堂加分/操作留痕' },
       { id: 't2', group: '会前对接', title: '明确现场分工、讲解流程与领导巡视配合方式', owner: '负责人', status: 'todo', note: '' },
       { id: 't3', group: '会前对接', title: '确认AI工具与账号准备情况，以及作品材料导出与存档方式', owner: '负责人', status: 'todo', note: '' },
       { id: 't4', group: '会前对接', title: '调试到场统计与作品提交大屏，完成兜底方案', owner: '技术组', status: 'doing', note: '到场/提交大屏/导出/成果佐证关联' },
@@ -34,6 +34,14 @@
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
+  // 旧数据兼容：学生与加分记录补齐“辅导员姓名”字段
+  function migrateCounselor(data) {
+    ['students', 'scores'].forEach(function (k) {
+      (data[k] || []).forEach(function (r) { if (r.counselor === undefined) r.counselor = ''; });
+    });
+    return data;
+  }
+
   function load() {
     try {
       var raw = localStorage.getItem(KEY);
@@ -41,7 +49,7 @@
       var data = JSON.parse(raw);
       // 补齐字段，兼容旧版本
       Object.keys(SEED).forEach(function (k) { if (data[k] === undefined) data[k] = clone(SEED[k]); });
-      return data;
+      return migrateCounselor(data);
     } catch (e) {
       console.warn('store load failed, using seed', e);
       return clone(SEED);
@@ -76,6 +84,7 @@
         var exist = s.students.filter(function (x) { return x.sid === rec.sid; })[0];
         if (exist) {
           exist.name = rec.name; exist.className = rec.className;
+          exist.counselor = rec.counselor || '';
           exist.task = rec.task || exist.task;
           exist.completed = rec.completed !== undefined ? rec.completed : exist.completed;
           exist.time = rec.time || exist.time;
@@ -83,7 +92,7 @@
         }
         var item = {
           id: 's' + Date.now() + Math.floor(Math.random() * 1000),
-          name: rec.name, sid: rec.sid, className: rec.className,
+          name: rec.name, sid: rec.sid, className: rec.className, counselor: rec.counselor || '',
           task: rec.task || '', completed: !!rec.completed,
           time: rec.time || new Date().toISOString(),
           recheck: false
@@ -136,7 +145,7 @@
         s.students.forEach(function (st) {
           if (!st.completed) return;
           var sc = s.scores.filter(function (x) { return x.sid === st.sid; })[0];
-          if (!sc) { added++; s.scores.unshift({ sid: st.sid, name: st.name, className: st.className, task: st.task, score: rule, trace: '系统同步（签到完成）', time: new Date().toISOString() }); }
+          if (!sc) { added++; s.scores.unshift({ sid: st.sid, name: st.name, className: st.className, counselor: st.counselor || '', task: st.task, score: rule, trace: '系统同步（签到完成）', time: new Date().toISOString() }); }
         });
         return added;
       });
@@ -187,7 +196,7 @@
         var d = JSON.parse(text);
         if (!d || typeof d !== 'object') throw new Error('格式错误');
         Object.keys(SEED).forEach(function (k) { if (d[k] === undefined) d[k] = clone(SEED[k]); });
-        state = d; save(state); return { ok: true };
+        state = migrateCounselor(d); save(state); return { ok: true };
       } catch (e) { return { ok: false, msg: e.message }; }
     }
   };

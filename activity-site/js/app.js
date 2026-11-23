@@ -188,7 +188,7 @@
                  '<button class="btn primary" id="dashFull">' + ic('screen') + '全屏展示</button>'
       }) +
       '<div class="dash-banner fade-in">' +
-        '<div class="db-main"><span class="db-live"><span class="pulse-dot"></span> LIVE · 实验室开放日</span>' +
+        '<div class="db-main"><span class="db-live"><span class="pulse-dot"></span> LIVE · <b class="open-day">实验室开放日</b></span>' +
           '<h2>' + E(ev.labName || '管理学院章鱼大数据实验室') + ' · ' + E(ev.theme || 'AI游戏奇遇记：零代码创作实战') + '</h2>' +
           '<p>地点 ' + E(ev.location || '至学楼D103') + ' · ' + E(ev.openDayTheme || '开放共享，实践求真') + ' · ' + E(ev.taskBrief || '') + '</p></div>' +
         '<div class="db-side"><div class="db-clock" id="dashClock">--:--:--</div><div class="db-date">' + UI.dateStr() +
@@ -347,9 +347,9 @@
         '<section class="card card-pad"><div class="mini-head">扫码自助签到</div>' +
           '<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">' +
             '<div class="qr-box" id="qrBox"></div>' +
-            '<div style="flex:1;min-width:140px"><b style="font-size:13px">移动端扫码填报</b>' +
-            '<p class="hint">学生用手机扫描二维码，进入签到表单自助填写。二维码指向本页，可部署到局域网后使用。</p>' +
-            '<div class="mono" style="font-size:10px;color:var(--txt-3);word-break:break-all" id="shareUrl"></div></div>' +
+            '<div style="flex:1;min-width:140px"><b style="font-size:15px">移动端扫码填报</b>' +
+            '<p class="hint">学生用手机扫描二维码进入签到表单。<b class="hl">点击二维码可放大查看</b>，便于远距离扫码；可部署到局域网后使用。</p>' +
+            '<div class="mono" style="font-size:12px;color:var(--txt-3);word-break:break-all" id="shareUrl"></div></div>' +
           '</div>' +
           '<div class="divider"></div>' +
           '<form id="ckForm">' +
@@ -469,26 +469,68 @@
     });
   }
 
-  /* 简易二维码图案（装饰性，指向本页链接） */
+  /* 真实可扫描二维码（本地 qrcodejs，离线可用）；生成后用 canvas 数据展示，保证清晰 */
   function renderQR(el, text) {
     if (!el) return;
-    var n = 21, cells = '';
-    var seed = 0; for (var i = 0; i < text.length; i++) seed = (seed * 31 + text.charCodeAt(i)) >>> 0;
-    function rnd(x, y) { var v = Math.sin((x + 1) * 12.9898 + (y + 1) * 78.233 + seed % 1000) * 43758.5453; return v - Math.floor(v) > .5; }
-    function finder(x, y) {
-      var inF = (x < 7 && y < 7) || (x > n - 8 && y < 7) || (x < 7 && y > n - 8);
-      if (!inF) return null;
-      var fx = x < 7 ? x : x - (n - 7), fy = y < 7 ? y : y - (n - 7);
-      var edge = fx === 0 || fy === 0 || fx === 6 || fy === 6;
-      var core = fx >= 2 && fx <= 4 && fy >= 2 && fy <= 4;
-      return edge || core;
+    el.innerHTML = '';
+    if (!global.QRCode) { el.innerHTML = '<div class="qr-fallback">二维码组件未加载</div>'; return; }
+    try {
+      new global.QRCode(el, {
+        text: text,
+        width: 220,
+        height: 220,
+        colorDark: '#091126',
+        colorLight: '#ffffff',
+        correctLevel: global.QRCode.CorrectLevel.H
+      });
+      el.classList.add('qr-clickable');
+      el.setAttribute('role', 'button');
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('title', '点击放大二维码');
+      var open = function (e) { if (e && e.preventDefault) e.preventDefault(); openQR(text); };
+      el.addEventListener('click', open);
+      el.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') open(e); });
+    } catch (err) {
+      el.innerHTML = '<div class="qr-fallback">二维码生成失败</div>';
+      console.warn('QR render failed', err);
     }
-    for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) {
-      var f = finder(x, y);
-      var on = f === null ? rnd(x, y) : f;
-      if (on) cells += '<rect x="' + x + '" y="' + y + '" width="1" height="1"/>';
+  }
+
+  /* 点击放大查看：大尺寸真实二维码 + 链接文本，方便手机扫码 */
+  function openQR(text) {
+    var old = $('#qrModal');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    var mask = document.createElement('div');
+    mask.className = 'qr-modal';
+    mask.id = 'qrModal';
+    mask.innerHTML =
+      '<div class="qr-modal-box" role="dialog" aria-modal="true" aria-label="放大二维码">' +
+        '<button class="qr-modal-close" type="button" aria-label="关闭">&times;</button>' +
+        '<h3 class="qr-modal-title">扫码进入学生签到</h3>' +
+        '<div class="qr-modal-code" id="qrModalCode"></div>' +
+        '<p class="qr-modal-tip">请用手机相机或微信扫描上方二维码</p>' +
+        '<div class="qr-modal-url" id="qrModalUrl"></div>' +
+      '</div>';
+    document.body.appendChild(mask);
+    void mask.offsetWidth;
+    mask.classList.add('show');
+    try {
+      new global.QRCode($('#qrModalCode'), {
+        text: text, width: 460, height: 460,
+        colorDark: '#091126', colorLight: '#ffffff',
+        correctLevel: global.QRCode.CorrectLevel.H
+      });
+    } catch (err) { $('#qrModalCode').innerHTML = '<div class="qr-fallback">二维码生成失败</div>'; }
+    $('#qrModalUrl').textContent = text;
+    function close() {
+      mask.classList.remove('show');
+      setTimeout(function () { if (mask.parentNode) mask.parentNode.removeChild(mask); }, 180);
+      document.removeEventListener('keydown', onKey);
     }
-    el.innerHTML = '<svg viewBox="-1 -1 23 23" style="fill:#091126;stroke:none">' + cells + '</svg>';
+    function onKey(e) { if (e.key === 'Escape' || e.keyCode === 27) close(); }
+    mask.querySelector('.qr-modal-close').addEventListener('click', close);
+    mask.addEventListener('click', function (e) { if (e.target === mask) close(); });
+    document.addEventListener('keydown', onKey);
   }
 
   /* 后续模块在下一节追加 */

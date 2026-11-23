@@ -92,7 +92,7 @@
       var st = { total: d.total, done: d.done, rate: d.rate, classes: d.classes };
       var doneTasks = s.tasks.filter(function (t) { return t.status === 'done'; }).length;
       var launches = [
-        { id: 'checkin', icon: 'check', t: '学生到场登记', d: '采集姓名、学号、班级、到场时间与作品提交情况，作为大屏数据源。' },
+        { id: 'checkin', icon: 'check', t: '学生到场登记', d: '采集姓名、学号、班级、辅导员姓名、到场时间与作品提交情况，作为大屏数据源。' },
         { id: 'dashboard', icon: 'screen', t: 'AI创作数据大屏', d: '实时可视化到场人数、作品提交率、班级分布与任务进度，支持导出。' },
         { id: 'registry', icon: 'sheet', t: '登记表生成打印', d: '按模板栏目生成约200行正式纸质登记表，A4 横版直接打印。' },
         { id: 'leader', icon: 'crown', t: '领导巡视展示', d: '一键进入展示模式：可视化数据 + 学生小游戏作品与照片轮播。' }
@@ -114,7 +114,7 @@
         '<section class="card card-pad"><div class="mini-head">活动五阶段流程</div>' +
           '<div class="timeline">' +
           [['会前对接', '操作步骤确认 · AI工具与账号准备 · 场地布置 · 登记表与工具开发'],
-           ['表格制作', '按模板制作约200行登记表，含姓名/学号/班级/作品/加分/留痕'],
+           ['表格制作', '按模板制作约200行登记表，含姓名/学号/班级/辅导员/作品/加分/留痕'],
            ['现场执行', '到场签到 · AI零代码创作 · 作品现场提交 · 佐证照片 · 氛围音乐'],
            ['应急预案', '人少固定学生 · 人多搬椅分批 · 工具故障切纸质'],
            ['领导巡视', '真实创作 · 屏幕有作品 · 大屏数据 + 成果照片展示']].map(function (x, i) {
@@ -323,7 +323,7 @@
         '<section class="card chart-box"><div class="chart-title">实时提交动态 <small>LIVE FEED</small></div><div class="live-list" id="dashFeed">' +
           (d.recent.length ? d.recent.map(function (x) {
             return '<div class="live-item"><div class="avatar">' + E(x.name.slice(0, 1)) + '</div>' +
-              '<div class="who"><b>' + E(x.name) + '</b><span>' + E(x.className) + ' · ' + E(x.task || 'AI小游戏作品') + '</span></div>' +
+              '<div class="who"><b>' + E(x.name) + '</b><span>' + E(x.className) + ' · ' + E(x.counselor || '未填辅导员') + ' · ' + E(x.task || 'AI小游戏作品') + '</span></div>' +
               '<time>' + UI.nowStr(x.time) + '</time></div>';
           }).join('') : '<div class="empty">等待学生提交作品</div>') + '</div></section>' +
         '<section class="card chart-box"><div class="chart-title">现场执行口径 <small>GUIDELINES</small></div>' + guideHtml + '</section>' +
@@ -398,7 +398,7 @@
       return UI.pageHead({
         eyebrow: 'CHECK-IN · STUDENT REGISTRATION',
         title: '学生到场与作品登记',
-        desc: '采集姓名、学号、班级、到场时间与作品提交情况。借助AI工具零代码完成小游戏作品并现场提交，数据实时汇入大屏。',
+        desc: '采集姓名、学号、班级、辅导员姓名、到场时间与作品提交情况。借助AI工具零代码完成小游戏作品并现场提交，数据实时汇入大屏。',
         actions: '<button class="btn" id="ckExport">' + ic('download') + '导出记录</button>'
       }) +
       '<div class="grid g-1-2">' +
@@ -416,6 +416,7 @@
               '<div class="field"><label>学号 <span class="req">*</span></label><input class="input" name="sid" placeholder="请输入学号" required></div>' +
             '</div>' +
             '<div class="field"><label>班级 <span class="req">*</span></label><input class="input" name="className" placeholder="如：工商管理2201班" required></div>' +
+            '<div class="field"><label>辅导员姓名 <span class="req">*</span></label><input class="input" name="counselor" placeholder="请输入辅导员姓名" required></div>' +
             '<div class="field"><label>小游戏作品名称</label><input class="input" name="task" placeholder="如：AI生成的小游戏作品名称"></div>' +
             '<div class="field"><label>作品提交情况</label><div class="seg" id="ckSeg">' +
               '<button type="button" data-v="0" class="on">未提交</button><button type="button" data-v="1">已提交</button></div></div>' +
@@ -423,7 +424,7 @@
           '</form>' +
         '</section>' +
         '<section class="card card-pad"><div class="mini-head">到场记录（' + s.students.length + ' 条）</div>' +
-          '<div class="table-wrap"><table><thead><tr><th>姓名</th><th>学号</th><th>班级</th><th>任务项</th><th>完成情况</th><th>签到时间</th><th>操作</th></tr></thead>' +
+          '<div class="table-wrap"><table><thead><tr><th>姓名</th><th>学号</th><th>班级</th><th>辅导员姓名</th><th>任务项</th><th>完成情况</th><th>签到时间</th><th>操作</th></tr></thead>' +
           '<tbody id="ckBody">' + ckRows() + '</tbody></table></div>' +
         '</section>' +
       '</div>';
@@ -442,9 +443,10 @@
         e.preventDefault();
         var form = e.target, f = form.elements, rec = {
           name: f.name.value.trim(), sid: f.sid.value.trim(),
-          className: f.className.value.trim(), task: f.task.value.trim(), completed: completed
+          className: f.className.value.trim(), counselor: f.counselor.value.trim(),
+          task: f.task.value.trim(), completed: completed
         };
-        if (!rec.name || !rec.sid || !rec.className) { UI.toast('请填写姓名、学号与班级', 'err'); return; }
+        if (!rec.name || !rec.sid || !rec.className || !rec.counselor) { UI.toast('请填写姓名、学号、班级与辅导员姓名', 'err'); return; }
         var r = Store.addStudent(rec);
         UI.toast(r.updated ? '已更新 ' + rec.name + ' 的签到信息' : '签到成功：' + rec.name, 'ok');
         form.reset(); completed = 0; $$('#ckSeg button')[0].classList.add('on'); $$('#ckSeg button')[1].classList.remove('on');
@@ -456,10 +458,10 @@
   };
   function ckRows() {
     var list = Store.state.students;
-    if (!list.length) return '<tr><td colspan="7"><div class="empty">' + ic('check') + '暂无到场记录，请在左侧提交第一条</div></td></tr>';
+    if (!list.length) return '<tr><td colspan="8"><div class="empty">' + ic('check') + '暂无到场记录，请在左侧提交第一条</div></td></tr>';
     return list.map(function (x) {
       return '<tr><td><b style="color:var(--txt)">' + E(x.name) + '</b></td><td class="mono">' + E(x.sid) + '</td>' +
-        '<td>' + E(x.className) + '</td><td>' + E(x.task || '—') + '</td>' +
+        '<td>' + E(x.className) + '</td><td>' + E(x.counselor || '—') + '</td><td>' + E(x.task || '—') + '</td>' +
         '<td><span class="tag ' + (x.completed ? 'ok' : 'warn') + '">' + (x.completed ? '已完成' : '未完成') + '</span></td>' +
         '<td class="mono">' + UI.nowStr(x.time) + '</td>' +
         '<td><div style="display:flex;gap:5px"><button class="btn sm ghost" data-toggle="' + x.id + '">' + ic('edit') + '</button>' +

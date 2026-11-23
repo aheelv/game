@@ -348,7 +348,7 @@
   }
 
   function bindEvents() {
-    global.addEventListener('store:changed', function () {
+    function scheduleRefresh() {
       clearTimeout(state.debounce);
       state.debounce = setTimeout(function () {
         refresh();
@@ -356,6 +356,17 @@
         var paper = global.Store && Store.state.settings && Store.state.settings.paperMode;
         if (!paper && !state.timer) startPolling();
       }, Math.max(50, +config.refresh.debounceMs || 300));
+    }
+    global.addEventListener('store:changed', scheduleRefresh);
+    /* 跨标签页同步：签到页与数据大屏常在不同浏览器标签/窗口打开。
+       localStorage 写入会在「其他」标签页触发 storage 事件，这里让大屏即时重载 Store 并刷新快照，
+       保证提交后统计与列表在两个页面状态一致。 */
+    global.addEventListener('storage', function (e) {
+      if (!e) return;
+      if (e.key === 'dcc_openlab_v2' || e.key === SNAPSHOT_CACHE_KEY || e.key === USER_CFG_KEY) {
+        if (global.Store && Store.reload) Store.reload();
+        scheduleRefresh();
+      }
     });
     if (global.document) {
       document.addEventListener('visibilitychange', function () {
@@ -382,9 +393,20 @@
   }
 
   function init() {
+    /* 本地模式（默认）以真实签到数据为准，避免旧缓存导致刷新后统计不一致；
+       只有本地无数据时才回退到上一帧缓存。API/演示模式仍以各自 refresh 结果为准。 */
+    var mode = config.source.mode;
     var cache = readCache();
-    var records = cache && cache.records && cache.records.length ? cache.records : localRecords();
-    state.snapshot = buildSnapshot(records, (cache && cache.meta && cache.meta.source) || 'local', false, '');
+    var local = localRecords();
+    var records, src;
+    if (mode === 'local') {
+      records = local;
+      src = 'local';
+    } else {
+      records = cache && cache.records && cache.records.length ? cache.records : (local.length ? local : []);
+      src = (cache && cache.meta && cache.meta.source) || (local.length ? 'local' : 'local');
+    }
+    state.snapshot = buildSnapshot(records, src, false, '');
 
     var override = null;
     try { override = JSON.parse(lsGet(USER_CFG_KEY) || 'null'); } catch (e) { override = null; }

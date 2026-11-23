@@ -339,7 +339,8 @@
         eyebrow: 'CHECK-IN · STUDENT REGISTRATION',
         title: '学生到场与作品登记',
         desc: '采集姓名、学号、班级、辅导员姓名、到场时间与作品提交情况。借助AI工具零代码完成小游戏作品并现场提交，数据实时汇入大屏。',
-        actions: '<button class="btn" id="ckExport">' + ic('download') + '导出记录</button>'
+        actions: '<button class="btn" id="ckExport">' + ic('download') + '导出记录</button>' +
+          '<button class="btn danger" id="ckClearAll"' + (s.students.length ? '' : ' disabled') + '>' + ic('trash') + '清空全部</button>'
       }) +
       success +
       '<div class="grid g-1-2">' +
@@ -364,7 +365,8 @@
             '<button class="btn primary block" type="submit">' + ic('check') + '提交到场登记</button>' +
           '</form>' +
         '</section>' +
-        '<section class="card card-pad"><div class="mini-head">到场记录（' + s.students.length + ' 条）</div>' +
+        '<section class="card card-pad"><div class="record-head"><div class="mini-head" style="margin:0">到场记录（' + s.students.length + ' 条）</div>' +
+          (s.students.length ? '<span class="record-hint">可删除单条或清空全部，操作后大屏同步更新</span>' : '') + '</div>' +
           '<div class="table-wrap"><table><thead><tr><th>姓名</th><th>学号</th><th>班级</th><th>辅导员姓名</th><th>任务项</th><th>完成情况</th><th>签到时间</th><th>操作</th></tr></thead>' +
           '<tbody id="ckBody">' + ckRows() + '</tbody></table></div>' +
         '</section>' +
@@ -417,13 +419,54 @@
         '<td>' + E(x.className) + '</td><td>' + E(x.counselor || '—') + '</td><td>' + E(x.task || '—') + '</td>' +
         '<td><span class="tag ' + (x.completed ? 'ok' : 'warn') + '">' + (x.completed ? '已完成' : '未完成') + '</span></td>' +
         '<td class="mono">' + UI.nowStr(x.time) + '</td>' +
-        '<td><div style="display:flex;gap:5px"><button class="btn sm ghost" data-toggle="' + x.id + '">' + ic('edit') + '</button>' +
-        '<button class="btn sm danger" data-del="' + x.id + '">' + ic('trash') + '</button></div></td></tr>';
+        '<td><div style="display:flex;gap:5px"><button class="btn sm ghost" data-toggle="' + x.id + '" title="切换完成状态">' + ic('edit') + '</button>' +
+        '<button class="btn sm danger" data-del="' + x.id + '" title="删除该条签到记录">' + ic('trash') + '</button></div></td></tr>';
     }).join('');
   }
+  /* 删除/清空后统一同步：刷新数据源 → 快照更新 → 大屏随事件重绘 → 列表重渲染 */
+  function afterCheckinMutation(msg) {
+    if (global.DataSource && DataSource.refresh) DataSource.refresh();
+    UI.toast(msg, 'info');
+    go('checkin');
+  }
   function bindCkActions() {
-    $$('[data-toggle]').forEach(function (b) { b.addEventListener('click', function () { Store.toggleDone(b.getAttribute('data-toggle')); UI.toast('完成状态已更新', 'ok'); go('checkin'); }); });
-    $$('[data-del]').forEach(function (b) { b.addEventListener('click', function () { Store.removeStudent(b.getAttribute('data-del')); UI.toast('记录已删除', 'info'); go('checkin'); }); });
+    $$('[data-toggle]').forEach(function (b) { b.addEventListener('click', function () { Store.toggleDone(b.getAttribute('data-toggle')); afterCheckinMutation('完成状态已更新'); }); });
+    $$('[data-del]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var id = b.getAttribute('data-del');
+        var rec = Store.state.students.filter(function (x) { return x.id === id; })[0];
+        if (!rec) { UI.toast('记录不存在或已被删除', 'err'); go('checkin'); return; }
+        UI.confirm({
+          danger: true,
+          title: '删除签到记录',
+          message: '将删除 <b>' + E(rec.name) + '</b>（学号 <span class="mono">' + E(rec.sid) + '</span>）的签到记录，其关联的第二课堂加分也会一并移除。',
+          tip: '删除后该记录将从名单与 AI 创作大屏中消失，且无法恢复。',
+          okText: '确认删除',
+          cancelText: '取消'
+        }).then(function (ok) {
+          if (!ok) return;
+          var r = Store.removeStudent(id);
+          afterCheckinMutation(r.ok ? '已删除 ' + rec.name + ' 的签到记录' : '删除失败，请重试');
+        });
+      });
+    });
+    var clearAll = $('#ckClearAll');
+    if (clearAll) clearAll.addEventListener('click', function () {
+      var n = Store.state.students.length;
+      if (!n) { UI.toast('当前没有签到记录', 'info'); return; }
+      UI.confirm({
+        danger: true,
+        title: '清空全部签到记录',
+        message: '将一次性删除当前全部 <b>' + n + '</b> 条签到记录，并清空由其派生的第二课堂加分数据。',
+        tip: '此操作不可恢复。建议先点击「导出记录」备份；清空后名单与 AI 创作大屏统计将归零。',
+        okText: '清空全部',
+        cancelText: '取消'
+      }).then(function (ok) {
+        if (!ok) return;
+        var r = Store.clearStudents();
+        afterCheckinMutation('已清空全部 ' + r.count + ' 条签到记录');
+      });
+    });
   }
 
   /* 简易二维码图案（装饰性，指向本页链接） */

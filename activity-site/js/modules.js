@@ -411,7 +411,7 @@
             }).join('') : '<div class="empty">暂无动态</div>') + '</div>' +
         '</section>' +
         '<section class="card chart-box"><div class="chart-title">学生成果与佐证照片 <small id="ldSlideInfo">0 / ' + arc.length + '</small></div>' +
-          '<div id="ldStage" style="min-height:330px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(45,226,230,.06),rgba(155,109,255,.06));border:1px solid var(--line);border-radius:12px;padding:20px;text-align:center">' +
+          '<div id="ldStage" style="min-height:330px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(0,230,210,.06),rgba(124,77,255,.06));border:1px solid var(--line);border-radius:12px;padding:20px;text-align:center">' +
             ldSlide(0) + '</div>' +
           '<div style="display:flex;gap:8px;justify-content:center;margin-top:14px">' +
             '<button class="btn sm" id="ldPrev">← 上一项</button><button class="btn sm" id="ldNext">下一项 →</button></div>' +

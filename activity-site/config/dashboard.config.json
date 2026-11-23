@@ -36,7 +36,7 @@
     "intervalMs": 4200
   },
   "theme": {
-    "colors": ["#2de2e6", "#9b6dff", "#f472b6", "#3ee0a0", "#ffb454", "#4d7cfe"]
+    "colors": ["#00e6d2", "#7c4dff", "#ff5c9d", "#2ee6a8", "#ff8a3d", "#3d7dff"]
   },
   "source": {
     "mode": "local",

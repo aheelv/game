@@ -75,7 +75,15 @@
     reload: function () { state = load(); return state; },
     commit: function (fn) { var r = fn(state); save(state); return r; },
     reset: function () { state = clone(SEED); save(state); return state; },
-    clearStudents: function () { return this.commit(function (s) { s.students = []; s.scores = []; }); },
+    /* 清空全部签到记录（同时清理由签到派生的加分记录），返回删除条数 */
+    clearStudents: function () {
+      var count = this.commit(function (s) {
+        var n = s.students.length;
+        s.students = []; s.scores = [];
+        return n;
+      });
+      return { count: count || 0 };
+    },
 
     // ---- 签到 ----
     addStudent: function (rec) {
@@ -108,8 +116,15 @@
         return x;
       });
     },
+    /* 删除单条签到记录，并移除同学号派生的加分记录，返回是否命中 */
     removeStudent: function (id) {
-      return this.commit(function (s) { s.students = s.students.filter(function (v) { return v.id !== id; }); });
+      var removed = null;
+      this.commit(function (s) {
+        removed = s.students.filter(function (v) { return v.id === id; })[0] || null;
+        s.students = s.students.filter(function (v) { return v.id !== id; });
+        if (removed) s.scores = s.scores.filter(function (v) { return v.sid !== removed.sid; });
+      });
+      return { ok: !!removed, record: removed };
     },
     stats: function () {
       var s = state.students;

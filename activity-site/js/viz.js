@@ -24,7 +24,7 @@
     var grid = '';
     for (var g = 0; g <= 4; g++) {
       var gy = pad.t + ih * g / 4;
-      grid += '<line x1="' + pad.l + '" y1="' + gy + '" x2="' + (W - pad.r) + '" y2="' + gy + '" stroke="rgba(120,160,255,.13)" stroke-dasharray="4 5"/>';
+      grid += '<line x1="' + pad.l + '" y1="' + gy + '" x2="' + (W - pad.r) + '" y2="' + gy + '" stroke="rgba(130,175,255,.13)" stroke-dasharray="4 5"/>';
       grid += '<text x="' + (pad.l - 9) + '" y="' + (gy + 4) + '" text-anchor="end" class="vz-axis">' + Math.round(max * (4 - g) / 4) + '</text>';
     }
     var paths = '';
@@ -35,7 +35,7 @@
       paths += '<path d="' + area + '" fill="' + s.color + '" opacity=".09"/>';
       paths += '<polyline points="' + pts + '" fill="none" stroke="' + s.color + '" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>';
       s.data.forEach(function (v, i) {
-        paths += '<circle cx="' + X(i) + '" cy="' + Y(v) + '" r="3.4" fill="' + s.color + '" stroke="#0b1129" stroke-width="1.6"><title>' + esc(labels[i] || '') + ' · ' + esc(s.name) + '：' + v + '</title></circle>';
+        paths += '<circle cx="' + X(i) + '" cy="' + Y(v) + '" r="3.4" fill="' + s.color + '" stroke="#0a1022" stroke-width="1.6"><title>' + esc(labels[i] || '') + ' · ' + esc(s.name) + '：' + v + '</title></circle>';
       });
     });
     var xlab = labels.map(function (l, i) {
@@ -53,11 +53,11 @@
     var r = 58, c = 2 * Math.PI * r;
     var p = Math.max(0, Math.min(100, +percent || 0));
     var off = c * (1 - p / 100);
-    var color = opts.color || '#22d3ee';
+    var color = opts.color || '#2de2e6';
     var gid = 'vzDonut' + Math.random().toString(36).slice(2, 7);
     return '<div class="vz-donut">' +
       '<svg viewBox="0 0 150 150">' +
-      '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="' + color + '"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs>' +
+      '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="' + color + '"/><stop offset="100%" stop-color="#9b6dff"/></linearGradient></defs>' +
       '<circle cx="75" cy="75" r="' + r + '" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="14"/>' +
       '<circle cx="75" cy="75" r="' + r + '" fill="none" stroke="url(#' + gid + ')" stroke-width="14" stroke-linecap="round" stroke-dasharray="' + c + '" stroke-dashoffset="' + off + '" transform="rotate(-90 75 75)"/>' +
       '</svg><div class="vz-donut-c"><b>' + p + '<small>%</small></b><span>' + esc(opts.label || '完成率') + '</span></div></div>';
@@ -91,22 +91,22 @@
     var rings = '';
     [0.25, 0.5, 0.75, 1].forEach(function (f) {
       var p = axes.map(function (_, i) { return pt(i, R * f).join(','); }).join(' ');
-      rings += '<polygon points="' + p + '" fill="none" stroke="rgba(120,160,255,.17)"/>';
+      rings += '<polygon points="' + p + '" fill="none" stroke="rgba(130,175,255,.17)"/>';
     });
     var spokes = '', labels = '';
     axes.forEach(function (a, i) {
       var q = pt(i, R);
-      spokes += '<line x1="' + cx + '" y1="' + cy + '" x2="' + q[0] + '" y2="' + q[1] + '" stroke="rgba(120,160,255,.17)"/>';
+      spokes += '<line x1="' + cx + '" y1="' + cy + '" x2="' + q[0] + '" y2="' + q[1] + '" stroke="rgba(130,175,255,.17)"/>';
       var lp = pt(i, R + 22);
       labels += '<text x="' + lp[0] + '" y="' + lp[1] + '" text-anchor="middle" dominant-baseline="middle" class="vz-axis">' + esc(a) + '</text>';
     });
     var poly = values.map(function (v, i) { return pt(i, R * Math.max(0.05, Math.min(1, v / 100))).join(','); }).join(' ');
     var dots = values.map(function (v, i) {
       var q = pt(i, R * Math.max(0.05, Math.min(1, v / 100)));
-      return '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="3.2" fill="#22d3ee" stroke="#0b1129" stroke-width="1"/>';
+      return '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="3.2" fill="#2de2e6" stroke="#0a1022" stroke-width="1"/>';
     }).join('');
     return '<svg class="vz-svg vz-radar" viewBox="0 0 300 285">' + rings + spokes +
-      '<polygon points="' + poly + '" fill="rgba(34,211,238,.24)" stroke="#22d3ee" stroke-width="2"/>' + dots + labels + '</svg>';
+      '<polygon points="' + poly + '" fill="rgba(45,226,230,.24)" stroke="#2de2e6" stroke-width="2"/>' + dots + labels + '</svg>';
   }
 
   /* ---------- 分组柱状图（到场 / 提交） ---------- */
@@ -134,7 +134,7 @@
     var grid = '';
     for (var g = 0; g <= 4; g++) {
       var gy = pad.t + ih * g / 4;
-      grid += '<line x1="' + pad.l + '" y1="' + gy + '" x2="' + (W - pad.r) + '" y2="' + gy + '" stroke="rgba(120,160,255,.13)" stroke-dasharray="4 5"/>';
+      grid += '<line x1="' + pad.l + '" y1="' + gy + '" x2="' + (W - pad.r) + '" y2="' + gy + '" stroke="rgba(130,175,255,.13)" stroke-dasharray="4 5"/>';
       grid += '<text x="' + (pad.l - 8) + '" y="' + (gy + 4) + '" text-anchor="end" class="vz-axis">' + Math.round(max * (4 - g) / 4) + '</text>';
     }
     var rects = bins.map(function (b, i) {
@@ -145,14 +145,14 @@
         '<text x="' + (x + w / 2) + '" y="' + (H - 10) + '" text-anchor="middle" class="vz-axis">' + esc(b.label) + '</text>';
     }).join('');
     return '<svg class="vz-svg" viewBox="0 0 ' + W + ' ' + H + '">' +
-      '<defs><linearGradient id="vzHistG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#22d3ee"/></linearGradient></defs>' +
+      '<defs><linearGradient id="vzHistG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#9b6dff"/><stop offset="100%" stop-color="#2de2e6"/></linearGradient></defs>' +
       grid + rects + '</svg>';
   }
 
   /* ---------- 占比横条 ---------- */
   function shares(items, total, palette) {
     if (!items.length) return '<div class="empty">暂无作品数据</div>';
-    var colors = (palette && palette.length) ? palette : ['#22d3ee', '#8b5cf6', '#ec4899', '#34d399', '#fbbf24', '#3b82f6'];
+    var colors = (palette && palette.length) ? palette : ['#2de2e6', '#9b6dff', '#f472b6', '#3ee0a0', '#ffb454', '#4d7cfe'];
     return '<div class="vz-shares">' + items.map(function (it, i) {
       var pct = total ? Math.round(it.v / total * 100) : 0;
       return '<div class="vz-share"><span class="sn" title="' + esc(it.label) + '">' + esc(it.label) + '</span>' +

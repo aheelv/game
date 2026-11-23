@@ -5,7 +5,7 @@
 (function (global) {
   'use strict';
 
-  var KEY = 'glxy_activity_v1';
+  var KEY = 'dcc_openlab_v2';
 
   var SEED = {
     students: [],
@@ -13,23 +13,23 @@
     archives: [],
     photos: [],
     tasks: [
-      { id: 't1', group: '会前对接', title: '找到管理学院钉钉群11月13日文件及附件，确认模板格式与栏目要求', owner: '负责人', status: 'todo', note: '模板栏目：姓名/学号/班级/完成任务项/第二课堂加分/操作留痕' },
-      { id: 't2', group: '会前对接', title: '与许跃雯对接：全程参与、明确分工、领导巡视配合方式', owner: '负责人', status: 'todo', note: '' },
-      { id: 't3', group: '会前对接', title: '向智广老师确认项目材料导出形式与存档方式', owner: '负责人', status: 'todo', note: '' },
-      { id: 't4', group: '会前对接', title: '团队调研开发签到统计小工具并完成调试与兜底方案', owner: '技术组', status: 'doing', note: '签到/完成大屏/导出/成果佐证关联' },
-      { id: 't5', group: '表格制作', title: '按群文件模板制作学生任务完成登记表（打印约200行）', owner: '负责人', status: 'todo', note: '' },
+      { id: 't1', group: '会前对接', title: '确认实验室开放日活动方案与模板格式，明确至学楼D103场地与栏目要求', owner: '负责人', status: 'todo', note: '模板栏目：姓名/学号/班级/作品名称/第二课堂加分/操作留痕' },
+      { id: 't2', group: '会前对接', title: '明确现场分工、讲解流程与领导巡视配合方式', owner: '负责人', status: 'todo', note: '' },
+      { id: 't3', group: '会前对接', title: '确认AI工具与账号准备情况，以及作品材料导出与存档方式', owner: '负责人', status: 'todo', note: '' },
+      { id: 't4', group: '会前对接', title: '调试到场统计与作品提交大屏，完成兜底方案', owner: '技术组', status: 'doing', note: '到场/提交大屏/导出/成果佐证关联' },
+      { id: 't5', group: '表格制作', title: '按模板制作学生任务完成登记表（打印约200行）', owner: '负责人', status: 'todo', note: '' },
       { id: 't6', group: '表格制作', title: '确定登记栏目便于现场填写与后续统一录入加分', owner: '负责人', status: 'todo', note: '' },
-      { id: 't7', group: '现场执行', title: '全程在场：签到、表格发放回收、引导填表、大屏展示', owner: '全体', status: 'todo', note: '纸质为正式材料，大屏仅展示，二者一致' },
-      { id: 't8', group: '现场执行', title: '完成任务学生填表并留存项目成果材料作为积分佐证', owner: '全体', status: 'todo', note: '' },
-      { id: 't9', group: '现场执行', title: '收集佐证照片（学号+姓名，拍到本人+电脑项目界面）', owner: '全体', status: 'todo', note: '一人一张' },
+      { id: 't7', group: '现场执行', title: '全程在场：到场签到、表格发放回收、引导AI创作、大屏展示', owner: '全体', status: 'todo', note: '纸质为正式材料，大屏仅展示，二者一致' },
+      { id: 't8', group: '现场执行', title: '指导学生按操作步骤借助AI工具零代码完成小游戏并现场提交', owner: '全体', status: 'todo', note: '根据操作步骤，借助AI工具零代码完成小游戏作品并现场提交即完成任务' },
+      { id: 't9', group: '现场执行', title: '收集佐证照片（学号+姓名，拍到本人+电脑小游戏作品界面）', owner: '全体', status: 'todo', note: '一人一张' },
       { id: 't10', group: '现场执行', title: '播放轻音乐并调小音量，巡视时提前调好氛围', owner: '负责人', status: 'todo', note: '' },
-      { id: 't11', group: '应急预案', title: '人少：提前告知石主任安排固定学生全程在场', owner: '负责人', status: 'todo', note: '' },
-      { id: 't12', group: '应急预案', title: '人多：与许跃雯从104搬椅子到103，分批上机', owner: '负责人', status: 'todo', note: '' },
+      { id: 't11', group: '应急预案', title: '人少：提前安排固定学生全程在场进行AI创作', owner: '负责人', status: 'todo', note: '' },
+      { id: 't12', group: '应急预案', title: '人多：从相邻教室搬椅子到D103，分批上机', owner: '负责人', status: 'todo', note: '' },
       { id: 't13', group: '应急预案', title: '工具故障：立即停用，完全依靠纸质登记表', owner: '技术组', status: 'todo', note: '' },
-      { id: 't14', group: '领导巡视', title: '保证学生真实操作、屏幕有内容、大屏展示数据与成果照片', owner: '全体', status: 'todo', note: '' }
+      { id: 't14', group: '领导巡视', title: '保证学生真实创作、屏幕有作品、大屏展示数据与成果照片', owner: '全体', status: 'todo', note: '' }
     ],
     settings: { paperMode: false, music: false, volume: 0.12, lastPage: 'home' },
-    meta: { updatedAt: '', eventName: '大数据与人工智能实践教学活动' }
+    meta: { updatedAt: '', eventName: 'AI游戏奇遇记：零代码创作实战' }
   };
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }

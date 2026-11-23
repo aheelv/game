@@ -14,7 +14,7 @@
     schemaVersion: 1,
     eventId: 'dcc-openlab-2026-11-25',
     event: {
-      labName: '用友新道大数据实训室',
+      labName: '管理学院章鱼大数据实验室',
       location: '至学楼D103',
       theme: 'AI游戏奇遇记：零代码创作实战',
       openDayTheme: '开放共享，实践求真',
@@ -33,7 +33,7 @@
       { icon: 'spark', tag: 'ACTIVITY THEME', title: 'AI游戏奇遇记 · 零代码创作实战',
         desc: '借助AI工具，零代码完成小游戏作品并现场提交。让创意即刻成真，让每个想法都能跑起来。',
         k: '实战', v: 'AI 工具 · 小游戏创作 · 现场提交' },
-      { icon: 'box', tag: 'PROFESSIONAL BACKGROUND', title: '用友新道大数据实训室',
+      { icon: 'box', tag: 'PROFESSIONAL BACKGROUND', title: '管理学院章鱼大数据实验室',
         desc: '面向大数据与人工智能实践教学，承接实验室开放日真实项目任务，融合校企协同育人场景。',
         k: '场地', v: '至学楼D103 · 开放共享，实践求真' },
       { icon: 'screen', tag: 'PROFESSIONAL FEATURES', title: '零代码 · 可视化 · 全过程留痕',

@@ -18,9 +18,10 @@
   var current = DEFAULT_PAGE;
 
   /* ---------------- 路由 ---------------- */
-  function go(id) {
-    if (global.__dashCleanup) { global.__dashCleanup(); global.__dashCleanup = null; }
-    if (global.__ldTimer) { global.__ldTimer(); global.__ldTimer = null; }
+  function go(id, refreshing) {
+    /* refreshing=true 表示同一大屏的数据刷新：清理定时器但保留全屏沉浸状态 */
+    if (global.__dashCleanup) { global.__dashCleanup(!!refreshing); global.__dashCleanup = null; }
+    if (!refreshing && global.__ldTimer) { global.__ldTimer(); global.__ldTimer = null; }
     if (!PAGES[id]) id = DEFAULT_PAGE;
     current = id;
     location.hash = id;
@@ -80,12 +81,15 @@
     var hours = (cfg.window && cfg.window.hours && cfg.window.hours.length) ? cfg.window.hours.slice() : [8, 9, 10, 11, 12, 13, 14, 15, 16];
     var targets = cfg.targets || {};
     var topN = cfg.topN || {};
-    var byClass = {}, byTask = {}, heat = {}, hourTotal = {}, hourDone = {};
+    var byClass = {}, byCollege = {}, byTask = {}, heat = {}, hourTotal = {}, hourDone = {};
     hours.forEach(function (h) { hourTotal[h] = 0; hourDone[h] = 0; });
     list.forEach(function (x) {
       var c = x.className || '未填';
       if (!byClass[c]) byClass[c] = { total: 0, done: 0 };
       byClass[c].total++; if (x.completed) byClass[c].done++;
+      var col = x.college || '未填学院';
+      if (!byCollege[col]) byCollege[col] = { total: 0, done: 0 };
+      byCollege[col].total++; if (x.completed) byCollege[col].done++;
       if (x.task) byTask[x.task] = (byTask[x.task] || 0) + 1;
       var hr = new Date(x.time).getHours();
       if (hourTotal[hr] === undefined) { hourTotal[hr] = 0; hourDone[hr] = 0; }
@@ -119,8 +123,8 @@
       total: total, done: done, rate: rate, classes: cls.length,
       works: Object.keys(byTask).length,
       hours: hours, labels: labels, arrT: arrT, arrD: arrD,
-      byClass: byClass, cls: cls, heat: heat, workList: workList,
-      radar: radar, rechecks: rechecks,
+      byClass: byClass, cls: cls, byCollege: byCollege, colleges: Object.keys(byCollege).sort(),
+      heat: heat, workList: workList, radar: radar, rechecks: rechecks,
       recent: list.slice().sort(function (a, b) { return new Date(b.time) - new Date(a.time); }).slice(0, +topN.feed || 8)
     };
   }
@@ -135,11 +139,21 @@
 
   /* 数据源变化时重绘大屏：保留滚动位置与轮播页码，避免大屏跳动 */
   function onDataSourceChanged() {
+    /* 登记页：只刷新现场记录表格与计数，不重建表单，避免打断正在填写的内容 */
+    if (current === 'checkin') {
+      var body = $('#ckBody');
+      if (body) body.innerHTML = ckRows();
+      var head = $('.record-head .mini-head');
+      if (head) head.textContent = '到场记录（' + Store.state.students.length + ' 条）';
+      var clear = $('#ckClearAll');
+      if (clear) clear.disabled = !Store.state.students.length;
+      return;
+    }
     if (current !== 'dashboard') return;
     var app = $('#app');
     if (!app) return;
     var top = app.scrollTop;
-    go('dashboard');
+    go('dashboard', true);
     var next = $('#app');
     if (next) next.scrollTop = top;
   }
@@ -198,7 +212,7 @@
         kpi('check', '到场学生', d.total, '人', '累计到场记录', 'a', d.arrT) +
         kpi('spark', '作品提交', d.done, '人', '完成零代码创作', 'c', d.arrD) +
         kpi('screen', '提交率', d.rate, '%', '提交 / 到场', 'b', d.arrD) +
-        kpi('board', '参与班级', d.classes, '个', '到场覆盖班级', 'd', d.arrT) +
+        kpi('board', '专业班级', d.classes, '个', '到场覆盖专业班级', 'd', d.arrT) +
         kpi('box', '作品类型', d.works, '类', '小游戏作品种类', 'a', d.arrD) +
         kpi('info', '第二课堂', d.done * hoursPerWork, '学时', '按 ' + hoursPerWork + ' 学时 / 人计', 'c', d.arrD) +
       '</div>' +
@@ -211,9 +225,9 @@
           '<div class="vz-donut-legend"><div><i style="background:#2ee6a8"></i>已提交 <b>' + d.done + '</b> 人</div>' +
           '<div><i style="background:#ff8a3d"></i>待提交 <b>' + (d.total - d.done) + '</b> 人</div>' +
           '<div><i style="background:#7c4dff"></i>复核记录 <b>' + d.rechecks + '</b> 条</div></div>', '') +
-        panel('班级到场 / 提交对比', 'BY CLASS', V.bars(d.cls.map(function (c) { return { label: c, a: d.byClass[c].total, b: d.byClass[c].done }; })), '') +
+        panel('专业班级到场 / 提交对比', 'BY CLASS', V.bars(d.cls.map(function (c) { return { label: c, a: d.byClass[c].total, b: d.byClass[c].done }; })), '') +
         panel('参与维度画像', 'MULTI-DIMENSIONAL', V.radar(['到场规模', '提交完成', '班级覆盖', '作品多样', '过程规范'], d.radar), '') +
-        panel('班级 × 时段参与热度', 'HEATMAP', V.heatmap(d.cls.length ? d.cls : ['暂无班级'], d.labels, d.cls.length ? d.cls.map(function (c) {
+        panel('专业班级 × 时段参与热度', 'HEATMAP', V.heatmap(d.cls.length ? d.cls : ['暂无专业班级'], d.labels, d.cls.length ? d.cls.map(function (c) {
           return d.hours.map(function (h) { return d.heat[c][h] || 0; });
         }) : [d.hours.map(function () { return 0; })], heatStep), 'span2') +
         panel('到场时段分布', 'HISTOGRAM', V.histogram(d.hours.map(function (h) {
@@ -226,6 +240,7 @@
             '<div class="event-item"><span>活动地点</span><b>' + E(ev.location || '至学楼D103') + '</b></div>' +
             '<div class="event-item"><span>活动主题</span><b>' + E(ev.theme || 'AI游戏奇遇记：零代码创作实战') + '</b></div>' +
             '<div class="event-item"><span>开放日主题</span><b>' + E(ev.openDayTheme || '开放共享，实践求真') + '</b></div>' +
+            '<div class="event-item"><span>覆盖学院</span><b>' + d.colleges.length + ' 个' + (d.colleges.length ? ' · ' + E(d.colleges.join('、')) : '') + '</b></div>' +
           '</div>' +
           '<div class="task-brief">' + ic('spark') + '<div><b>任务说明</b><br>' + E(ev.taskBrief || '') +
             (ev.creditNote ? ' ' + E(ev.creditNote) : '') + '</div></div>' +
@@ -238,7 +253,7 @@
         '<section class="card chart-box"><div class="chart-title">实时提交动态 <small>LIVE FEED</small></div><div class="live-list" id="dashFeed">' +
           (d.recent.length ? d.recent.map(function (x) {
             return '<div class="live-item"><div class="avatar">' + E(x.name.slice(0, 1)) + '</div>' +
-              '<div class="who"><b>' + E(x.name) + '</b><span>' + E(x.className) + ' · ' + E(x.counselor || '未填辅导员') + ' · ' + E(x.task || 'AI小游戏作品') + '</span></div>' +
+              '<div class="who"><b>' + E(x.name) + '</b><span>' + E(x.college || '未填学院') + ' · ' + E(x.className) + ' · ' + E(x.counselor || '未填辅导员') + ' · ' + E(x.task || 'AI小游戏作品') + '</span></div>' +
               '<time>' + UI.nowStr(x.time) + '</time></div>';
           }).join('') : '<div class="empty">等待学生提交作品</div>') + '</div></section>' +
         '<section class="card chart-box"><div class="chart-title">现场执行口径 <small>GUIDELINES</small></div>' + guideHtml + '</section>' +
@@ -251,13 +266,53 @@
       $('#dashRefresh').addEventListener('click', function () {
         /* 主动重新读取签到数据并刷新快照；local 模式下同步生效，随后重绘大屏 */
         if (global.DataSource && DataSource.refresh) DataSource.refresh();
-        go('dashboard');
+        go('dashboard', true);
         UI.toast('已刷新：大屏数据已与最新签到信息同步', 'ok');
       });
       $('#dashExport').addEventListener('click', UI.exportStudents);
-      $('#dashFull').addEventListener('click', function () {
+
+      /* 全屏展示：进入时隐藏左侧导航并铺满内容；再次点击或按 ESC 退出并恢复原布局 */
+      var dashFull = $('#dashFull');
+      function setFullBtn(on) {
+        if (!dashFull) return;
+        dashFull.innerHTML = ic('screen') + (on ? '退出全屏' : '全屏展示');
+        dashFull.classList.toggle('on', on);
+      }
+      function enterImmersive() {
+        document.body.classList.add('dash-immersive');
+        $('#sidebar').classList.remove('open');
+        $('#overlay').classList.remove('show');
+        setFullBtn(true);
+      }
+      function exitImmersive() {
+        document.body.classList.remove('dash-immersive');
+        setFullBtn(false);
+      }
+      function onFsChange() {
+        if (!document.fullscreenElement) exitImmersive();
+      }
+      document.addEventListener('fullscreenchange', onFsChange);
+      dashFull.addEventListener('click', function () {
+        if (document.body.classList.contains('dash-immersive')) {
+          if (document.fullscreenElement && document.exitFullscreen) {
+            var q = document.exitFullscreen();
+            if (q && q.then) q.then(exitImmersive, exitImmersive); else exitImmersive();
+          } else exitImmersive();
+          UI.toast('已退出全屏，恢复原布局', 'info');
+          return;
+        }
         var el = document.documentElement;
-        if (el.requestFullscreen) el.requestFullscreen(); else UI.toast('当前浏览器不支持全屏', 'warn');
+        if (el.requestFullscreen) {
+          var p = el.requestFullscreen();
+          if (p && p.then) p.then(enterImmersive, function () {
+            UI.toast('浏览器阻止了原生全屏，已切换为沉浸展示', 'warn');
+            enterImmersive();
+          });
+          else enterImmersive();
+        } else {
+          enterImmersive();
+          UI.toast('当前浏览器不支持原生全屏，已切换为沉浸展示', 'info');
+        }
       });
       $('#dashDemo').addEventListener('click', function () {
         if (DataSource.getSnapshot().meta.source === 'demo') DataSource.setMode(lastLiveMode);
@@ -305,7 +360,17 @@
       var stage = $('.hl-stage');
       if (stage) { stage.addEventListener('mouseenter', stop); stage.addEventListener('mouseleave', play); }
       play();
-      global.__dashCleanup = function () { stop(); clearInterval(scrollTimer); clearInterval(ct); scrollTimer = null; };
+      /* 重建按钮后同步沉浸态文案，保证刷新大屏时按钮与实际状态一致 */
+      setFullBtn(document.body.classList.contains('dash-immersive'));
+      global.__dashCleanup = function (keepImmersive) {
+        stop(); clearInterval(scrollTimer); clearInterval(ct); scrollTimer = null;
+        document.removeEventListener('fullscreenchange', onFsChange);
+        /* 仅真正离开大屏页时退出沉浸布局；同页刷新保留全屏，避免数据更新打断展示 */
+        if (!keepImmersive && document.body.classList.contains('dash-immersive')) {
+          if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen();
+          exitImmersive();
+        }
+      };
     }
   };
 
@@ -316,12 +381,12 @@
 
   /* 提交成功反馈面板：明确告知学生签到结果与数据已同步 */
   function ckSuccessHtml(r) {
-    var status = r.completed ? '<span class="tag ok">已提交作品</span>' : '<span class="tag warn">未提交作品</span>';
+    var status = r.completed ? '<span class="tag ok">作品已提交</span>' : '<span class="tag warn">作品未提交</span>';
     return '<div class="checkin-success fade-in" id="ckSuccess" role="status">' +
       '<div class="cs-mark">' + ic('check') + '</div>' +
       '<div class="cs-body"><div class="cs-title">' + (r.updated ? '签到信息已更新' : '签到提交成功') + '</div>' +
         '<div class="cs-name">' + E(r.name) + '</div>' +
-        '<div class="cs-meta"><span class="mono">' + E(r.sid) + '</span><span>' + E(r.className) + '</span>' +
+        '<div class="cs-meta"><span class="mono">' + E(r.sid) + '</span><span>' + E(r.college || '未填学院') + ' · ' + E(r.className) + '</span>' +
           '<span>辅导员 ' + E(r.counselor || '—') + '</span>' + status + '</div>' +
         '<div class="cs-sync"><span class="pulse-dot"></span> 信息已保存并实时同步至 AI 创作大屏</div>' +
       '</div>' +
@@ -338,7 +403,7 @@
       return UI.pageHead({
         eyebrow: 'CHECK-IN · STUDENT REGISTRATION',
         title: '学生到场与作品登记',
-        desc: '采集姓名、学号、班级、辅导员姓名、到场时间与作品提交情况。借助AI工具零代码完成小游戏作品并现场提交，数据实时汇入大屏。',
+        desc: '采集姓名、学号、学院、专业班级、辅导员姓名与到场时间。作品提交情况初始为“未完成”，完成创作后由老师在右侧到场记录中改为“已完成”；数据实时汇入大屏。',
         actions: '<button class="btn" id="ckExport">' + ic('download') + '导出记录</button>' +
           '<button class="btn danger" id="ckClearAll"' + (s.students.length ? '' : ' disabled') + '>' + ic('trash') + '清空全部</button>'
       }) +
@@ -357,17 +422,19 @@
               '<div class="field"><label>姓名 <span class="req">*</span></label><input class="input" name="name" placeholder="请输入姓名" required></div>' +
               '<div class="field"><label>学号 <span class="req">*</span></label><input class="input" name="sid" placeholder="请输入学号" required></div>' +
             '</div>' +
-            '<div class="field"><label>班级 <span class="req">*</span></label><input class="input" name="className" placeholder="如：工商管理2201班" required></div>' +
+            '<div class="field-row">' +
+              '<div class="field"><label>学院 <span class="req">*</span></label><input class="input" name="college" placeholder="如：管理学院" required></div>' +
+              '<div class="field"><label>专业班级 <span class="req">*</span></label><input class="input" name="className" placeholder="如：大数据管理与应用2201班" required></div>' +
+            '</div>' +
             '<div class="field"><label>辅导员姓名 <span class="req">*</span></label><input class="input" name="counselor" placeholder="请输入辅导员姓名" required></div>' +
             '<div class="field"><label>小游戏作品名称</label><input class="input" name="task" placeholder="如：AI生成的小游戏作品名称"></div>' +
-            '<div class="field"><label>作品提交情况</label><div class="seg" id="ckSeg">' +
-              '<button type="button" data-v="0" class="on">未提交</button><button type="button" data-v="1">已提交</button></div></div>' +
+            '<div class="notice info mt12">' + ic('info') + '<div>作品提交情况由系统在登记时设为<b>未完成</b>，学生完成创作后由老师在右侧到场记录中修改，无需在此填写。</div></div>' +
             '<button class="btn primary block" type="submit">' + ic('check') + '提交到场登记</button>' +
           '</form>' +
         '</section>' +
         '<section class="card card-pad"><div class="record-head"><div class="mini-head" style="margin:0">到场记录（' + s.students.length + ' 条）</div>' +
-          (s.students.length ? '<span class="record-hint">可删除单条或清空全部，操作后大屏同步更新</span>' : '') + '</div>' +
-          '<div class="table-wrap"><table><thead><tr><th>姓名</th><th>学号</th><th>班级</th><th>辅导员姓名</th><th>任务项</th><th>完成情况</th><th>签到时间</th><th>操作</th></tr></thead>' +
+          (s.students.length ? '<span class="record-hint">老师可点编辑修改作品提交情况；删除或清空后大屏同步更新</span>' : '') + '</div>' +
+          '<div class="table-wrap"><table><thead><tr><th>姓名</th><th>学号</th><th>学院</th><th>专业班级</th><th>辅导员姓名</th><th>任务项</th><th>作品提交情况</th><th>签到时间</th><th>操作</th></tr></thead>' +
           '<tbody id="ckBody">' + ckRows() + '</tbody></table></div>' +
         '</section>' +
       '</div>';
@@ -375,28 +442,21 @@
     init: function (root) {
       renderQR($('#qrBox'), location.href.split('#')[0] + '#checkin');
       $('#shareUrl').textContent = location.href.split('#')[0] + '#checkin';
-      var completed = 0;
-      $$('#ckSeg button').forEach(function (b) {
-        b.addEventListener('click', function () {
-          $$('#ckSeg button').forEach(function (x) { x.classList.remove('on'); });
-          b.classList.add('on'); completed = b.getAttribute('data-v') === '1';
-        });
-      });
       $('#ckForm').addEventListener('submit', function (e) {
         e.preventDefault();
         var form = e.target, f = form.elements, rec = {
           name: f.name.value.trim(), sid: f.sid.value.trim(),
-          className: f.className.value.trim(), counselor: f.counselor.value.trim(),
-          task: f.task.value.trim(), completed: completed
+          college: f.college.value.trim(), className: f.className.value.trim(),
+          counselor: f.counselor.value.trim(), task: f.task.value.trim()
         };
-        if (!rec.name || !rec.sid || !rec.className || !rec.counselor) { UI.toast('请填写姓名、学号、班级与辅导员姓名', 'err'); return; }
+        if (!rec.name || !rec.sid || !rec.college || !rec.className || !rec.counselor) { UI.toast('请填写姓名、学号、学院、专业班级与辅导员姓名', 'err'); return; }
         var r = Store.addStudent(rec);
         /* 立即同步数据源（不等防抖），保证随后切换/刷新大屏读到的是最新签到数据 */
         if (global.DataSource && DataSource.refresh) DataSource.refresh();
-        /* 记录本次提交结果，重渲染后显示成功反馈面板 */
+        /* 记录本次提交结果，重渲染后显示成功反馈面板；完成状态取实际记录（老师可能已认定完成） */
         lastCheckinResult = {
-          name: rec.name, sid: rec.sid, className: rec.className, counselor: rec.counselor,
-          task: rec.task, completed: rec.completed, updated: !!r.updated
+          name: rec.name, sid: rec.sid, college: rec.college, className: rec.className, counselor: rec.counselor,
+          task: rec.task, completed: !!(r.record && r.record.completed), updated: !!r.updated
         };
         UI.toast(r.updated ? '已更新 ' + rec.name + ' 的签到信息' : '签到成功：' + rec.name, 'ok');
         go('checkin');
@@ -413,13 +473,14 @@
   };
   function ckRows() {
     var list = Store.state.students;
-    if (!list.length) return '<tr><td colspan="8"><div class="empty">' + ic('check') + '暂无到场记录，请在左侧提交第一条</div></td></tr>';
+    if (!list.length) return '<tr><td colspan="9"><div class="empty">' + ic('check') + '暂无到场记录，请在左侧提交第一条</div></td></tr>';
     return list.map(function (x) {
       return '<tr><td><b style="color:var(--txt)">' + E(x.name) + '</b></td><td class="mono">' + E(x.sid) + '</td>' +
-        '<td>' + E(x.className) + '</td><td>' + E(x.counselor || '—') + '</td><td>' + E(x.task || '—') + '</td>' +
+        '<td>' + E(x.college || '—') + '</td><td>' + E(x.className) + '</td>' +
+        '<td>' + E(x.counselor || '—') + '</td><td>' + E(x.task || '—') + '</td>' +
         '<td><span class="tag ' + (x.completed ? 'ok' : 'warn') + '">' + (x.completed ? '已完成' : '未完成') + '</span></td>' +
         '<td class="mono">' + UI.nowStr(x.time) + '</td>' +
-        '<td><div style="display:flex;gap:5px"><button class="btn sm ghost" data-toggle="' + x.id + '" title="切换完成状态">' + ic('edit') + '</button>' +
+        '<td><div style="display:flex;gap:5px"><button class="btn sm ghost" data-toggle="' + x.id + '" title="由老师修改作品提交情况">' + ic('edit') + '</button>' +
         '<button class="btn sm danger" data-del="' + x.id + '" title="删除该条签到记录">' + ic('trash') + '</button></div></td></tr>';
     }).join('');
   }
@@ -430,7 +491,7 @@
     go('checkin');
   }
   function bindCkActions() {
-    $$('[data-toggle]').forEach(function (b) { b.addEventListener('click', function () { Store.toggleDone(b.getAttribute('data-toggle')); afterCheckinMutation('完成状态已更新'); }); });
+    $$('[data-toggle]').forEach(function (b) { b.addEventListener('click', function () { Store.toggleDone(b.getAttribute('data-toggle')); afterCheckinMutation('作品提交情况已更新（老师认定）'); }); });
     $$('[data-del]').forEach(function (b) {
       b.addEventListener('click', function () {
         var id = b.getAttribute('data-del');

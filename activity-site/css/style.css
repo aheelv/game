@@ -502,10 +502,6 @@ tbody tr:last-child td{border-bottom:none}
 .vz-donut-c b{font-family:var(--mono);font-size:29px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
 .vz-donut-c b small{font-size:15px}
 .vz-donut-c span{font-size:12px;color:var(--txt-3);margin-top:2px}
-.vz-donut-legend{margin-top:14px;display:grid;gap:7px;font-size:13px;color:var(--txt-2)}
-.vz-donut-legend div{display:flex;align-items:center;gap:8px}
-.vz-donut-legend i{width:8px;height:8px;border-radius:2px}
-.vz-donut-legend b{font-family:var(--mono);color:var(--txt);margin-left:auto}
 .vz-radar{max-width:320px;margin:0 auto}
 
 /* 分组柱状图 */
@@ -594,6 +590,14 @@ tbody tr:last-child td{border-bottom:none}
 :fullscreen .dash-banner{padding:26px 34px}
 :fullscreen .dash-grid{gap:18px}
 :fullscreen .db-kpi{padding:18px 20px}
+
+/* 沉浸展示：由大屏“全屏展示”按钮切换，隐藏左侧导航列表并让内容铺满；
+   再次点击按钮或按 ESC 退出时移除该类，原布局自动恢复 */
+body.dash-immersive .sidebar,
+body.dash-immersive .overlay{display:none!important}
+body.dash-immersive .content-wrap{width:100%}
+body.dash-immersive .main{max-width:none;padding-left:34px;padding-right:34px}
+.btn.on{border-color:var(--cyan);color:var(--cyan);box-shadow:var(--glow)}
 
 /* 班级柱图标签防拥挤 */
 .vz-bars{gap:6px}

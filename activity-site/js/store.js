@@ -13,7 +13,7 @@
     archives: [],
     photos: [],
     tasks: [
-      { id: 't1', group: '会前对接', title: '确认实验室开放日活动方案与模板格式，明确至学楼D103场地与栏目要求', owner: '负责人', status: 'todo', note: '模板栏目：姓名/学号/班级/辅导员姓名/作品名称/第二课堂加分/操作留痕' },
+      { id: 't1', group: '会前对接', title: '确认实验室开放日活动方案与模板格式，明确至学楼D103场地与栏目要求', owner: '负责人', status: 'todo', note: '模板栏目：姓名/学号/学院/专业班级/辅导员姓名/作品名称/第二课堂加分/操作留痕' },
       { id: 't2', group: '会前对接', title: '明确现场分工、讲解流程与领导巡视配合方式', owner: '负责人', status: 'todo', note: '' },
       { id: 't3', group: '会前对接', title: '确认AI工具与账号准备情况，以及作品材料导出与存档方式', owner: '负责人', status: 'todo', note: '' },
       { id: 't4', group: '会前对接', title: '调试到场统计与作品提交大屏，完成兜底方案', owner: '技术组', status: 'doing', note: '到场/提交大屏/导出/成果佐证关联' },
@@ -34,10 +34,15 @@
 
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
-  // 旧数据兼容：学生与加分记录补齐“辅导员姓名”字段
-  function migrateCounselor(data) {
+  // 旧数据兼容：补齐“辅导员姓名”；“班级”拆分为“学院 / 专业班级”后补齐 college 字段。
+  // 历史记录的 className 直接视为专业班级，学院留空由老师现场补录，避免旧数据丢失。
+  function migrateFields(data) {
     ['students', 'scores'].forEach(function (k) {
-      (data[k] || []).forEach(function (r) { if (r.counselor === undefined) r.counselor = ''; });
+      (data[k] || []).forEach(function (r) {
+        if (r.counselor === undefined) r.counselor = '';
+        if (r.college === undefined) r.college = '';
+        if (r.className === undefined) r.className = '';
+      });
     });
     return data;
   }
@@ -49,7 +54,7 @@
       var data = JSON.parse(raw);
       // 补齐字段，兼容旧版本
       Object.keys(SEED).forEach(function (k) { if (data[k] === undefined) data[k] = clone(SEED[k]); });
-      return migrateCounselor(data);
+      return migrateFields(data);
     } catch (e) {
       console.warn('store load failed, using seed', e);
       return clone(SEED);
@@ -91,17 +96,21 @@
       return this.commit(function (s) {
         var exist = s.students.filter(function (x) { return x.sid === rec.sid; })[0];
         if (exist) {
-          exist.name = rec.name; exist.className = rec.className;
+          exist.name = rec.name;
+          exist.college = rec.college || exist.college || '';
+          exist.className = rec.className || exist.className || '';
           exist.counselor = rec.counselor || '';
           exist.task = rec.task || exist.task;
+          /* 作品提交情况由老师在列表页维护；签到更新不得覆盖已完成的认定结果 */
           exist.completed = rec.completed !== undefined ? rec.completed : exist.completed;
           exist.time = rec.time || exist.time;
           return { ok: true, updated: true, record: exist };
         }
         var item = {
           id: 's' + Date.now() + Math.floor(Math.random() * 1000),
-          name: rec.name, sid: rec.sid, className: rec.className, counselor: rec.counselor || '',
-          task: rec.task || '', completed: !!rec.completed,
+          name: rec.name, sid: rec.sid,
+          college: rec.college || '', className: rec.className || '', counselor: rec.counselor || '',
+          task: rec.task || '', completed: false,
           time: rec.time || new Date().toISOString(),
           recheck: false
         };
@@ -130,16 +139,23 @@
       var s = state.students;
       var done = s.filter(function (x) { return x.completed; }).length;
       var classes = {}; s.forEach(function (x) { classes[x.className || '未填'] = 1; });
+      var colleges = {}; s.forEach(function (x) { colleges[x.college || '未填'] = 1; });
       var tasks = {};
       s.forEach(function (x) { if (x.task) tasks[x.task] = (tasks[x.task] || 0) + 1; });
       return {
         total: s.length, done: done,
         rate: s.length ? Math.round(done / s.length * 100) : 0,
         classes: Object.keys(classes).length,
+        colleges: Object.keys(colleges).length,
         byTask: tasks,
         byClass: (function () {
           var m = {};
           s.forEach(function (x) { var c = x.className || '未填'; if (!m[c]) m[c] = { total: 0, done: 0 }; m[c].total++; if (x.completed) m[c].done++; });
+          return m;
+        })(),
+        byCollege: (function () {
+          var m = {};
+          s.forEach(function (x) { var c = x.college || '未填学院'; if (!m[c]) m[c] = { total: 0, done: 0 }; m[c].total++; if (x.completed) m[c].done++; });
           return m;
         })()
       };
@@ -160,7 +176,7 @@
         s.students.forEach(function (st) {
           if (!st.completed) return;
           var sc = s.scores.filter(function (x) { return x.sid === st.sid; })[0];
-          if (!sc) { added++; s.scores.unshift({ sid: st.sid, name: st.name, className: st.className, counselor: st.counselor || '', task: st.task, score: rule, trace: '系统同步（签到完成）', time: new Date().toISOString() }); }
+          if (!sc) { added++; s.scores.unshift({ sid: st.sid, name: st.name, college: st.college || '', className: st.className, counselor: st.counselor || '', task: st.task, score: rule, trace: '系统同步（签到完成）', time: new Date().toISOString() }); }
         });
         return added;
       });
@@ -211,7 +227,7 @@
         var d = JSON.parse(text);
         if (!d || typeof d !== 'object') throw new Error('格式错误');
         Object.keys(SEED).forEach(function (k) { if (d[k] === undefined) d[k] = clone(SEED[k]); });
-        state = migrateCounselor(d); save(state); return { ok: true };
+        state = migrateFields(d); save(state); return { ok: true };
       } catch (e) { return { ok: false, msg: e.message }; }
     }
   };
